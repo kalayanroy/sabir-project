@@ -274,18 +274,17 @@ export default function AuthPage() {
                             <FormControl>
                               <div className="relative">
                                 <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                <Input 
+                                <input 
                                   type="text" 
                                   placeholder="Choose a username" 
-                                  className="pl-10"
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
                                   onChange={(e) => {
                                     console.log("Username input changed:", e.target.value);
-                                    field.onChange(e);
+                                    field.onChange(e.target.value);
                                   }}
                                   value={field.value || ""}
                                   name={field.name}
                                   onBlur={field.onBlur}
-                                  ref={field.ref}
                                 />
                               </div>
                             </FormControl>
@@ -306,18 +305,17 @@ export default function AuthPage() {
                             <FormControl>
                               <div className="relative">
                                 <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                <Input 
+                                <input 
                                   type="text" 
                                   placeholder="Enter your email" 
-                                  className="pl-10"
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
                                   onChange={(e) => {
                                     console.log("Email input changed:", e.target.value);
-                                    field.onChange(e);
+                                    field.onChange(e.target.value);
                                   }}
                                   value={field.value || ""}
                                   name={field.name}
                                   onBlur={field.onBlur}
-                                  ref={field.ref}
                                 />
                               </div>
                             </FormControl>
