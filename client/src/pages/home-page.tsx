@@ -77,6 +77,16 @@ export default function HomePage() {
                     </a>
                   </Button>
                 </li>
+                {user.username === "admin" && (
+                  <li>
+                    <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                      <a href="/admin" className="flex items-center">
+                        <Shield className="mr-3 h-5 w-5 text-red-500" />
+                        Admin Panel
+                      </a>
+                    </Button>
+                  </li>
+                )}
                 <li>
                   <Button variant="ghost" className="w-full justify-start font-normal" asChild>
                     <a href="#" className="flex items-center">
@@ -194,6 +204,46 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Admin Section - Only visible to admin users */}
+            {user.username === "admin" && (
+              <Card className="mb-6 border border-red-200">
+                <CardContent className="pt-6">
+                  <div className="flex items-center mb-4">
+                    <Shield className="h-6 w-6 text-red-500 mr-2" />
+                    <h3 className="text-lg font-medium">Admin Controls</h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-red-50 p-4 rounded-md border border-red-100">
+                      <h4 className="font-medium mb-2 text-red-800">Device Security Management</h4>
+                      <p className="text-sm text-red-700 mb-4">
+                        As an administrator, you can manage device blocking, review unblock requests, 
+                        and monitor security policies.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="bg-white border-red-200 text-red-700 hover:bg-red-50"
+                        asChild
+                      >
+                        <a href="/admin" className="flex items-center">
+                          <Shield className="mr-2 h-4 w-4" />
+                          Go to Admin Dashboard
+                        </a>
+                      </Button>
+                    </div>
+                    
+                    <div className="rounded-md bg-amber-50 p-4 border border-amber-100">
+                      <h4 className="font-medium mb-2 text-amber-800">Security Notice</h4>
+                      <p className="text-sm text-amber-700">
+                        Remember that only administrators should have access to the device management console. 
+                        Do not share your admin credentials with others.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             
             <Card className="mb-6">
               <CardContent className="pt-6">
