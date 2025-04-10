@@ -7,10 +7,10 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  deviceId: text("deviceId").notNull().default(null),
-  deviceName: text("deviceName").notNull().default(null),
-  deviceModel: text("deviceModel").notNull().default(null),
-  devicePlatform: text("devicePlatform").notNull().default(null),
+  deviceId: text("deviceId"),
+  deviceName: text("deviceName"),
+  deviceModel: text("deviceModel"),
+  devicePlatform: text("devicePlatform"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
