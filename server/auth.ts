@@ -49,25 +49,56 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        // Try to find user by username
-        let user = await storage.getUserByUsername(username);
-        
-        // If not found by username, try by email
-        if (!user) {
-          user = await storage.getUserByEmail(username);
-        }
-        
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Invalid username or password" });
-        } else {
+    new LocalStrategy(
+      { 
+        usernameField: 'username',
+        passwordField: 'password',
+        passReqToCallback: true 
+      },
+      async (req, username, password, done) => {
+        try {
+          // Try to find user by username
+          let user = await storage.getUserByUsername(username);
+          
+          // If not found by username, try by email
+          if (!user) {
+            user = await storage.getUserByEmail(username);
+          }
+          
+          if (!user || !(await comparePasswords(password, user.password))) {
+            return done(null, false, { message: "Invalid username or password" });
+          }
+          
+          // Device verification if deviceId exists for the user
+          if (user.deviceId) {
+            const deviceId = req.body.deviceId;
+            
+            // If the user has a registered device, verify it matches
+            if (user.deviceId !== deviceId) {
+              return done(null, false, { 
+                message: "Authentication failed: This account is registered to another device." 
+              });
+            }
+          }
+          
+          // If there's a deviceId in request but not in user, update the user
+          if (req.body.deviceId && !user.deviceId) {
+            // Update user with device info
+            user.deviceId = req.body.deviceId;
+            if (req.body.deviceInfo) {
+              user.deviceName = req.body.deviceInfo.deviceName || user.deviceName;
+              user.deviceModel = req.body.deviceInfo.deviceModel || user.deviceModel;
+              user.devicePlatform = req.body.deviceInfo.devicePlatform || user.devicePlatform;
+            }
+            // In a real implementation, we would update the user in the database here
+          }
+          
           return done(null, user);
+        } catch (error) {
+          return done(error);
         }
-      } catch (error) {
-        return done(error);
       }
-    }),
+    ),
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
@@ -117,14 +148,25 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: User | false, info: any) => {
       if (err) {
         return next(err);
       }
       if (!user) {
         return res.status(401).send(info?.message || "Invalid credentials");
       }
-      req.login(user, (err) => {
+      
+      // If deviceId is in request but not in user, update the user record
+      if (req.body.deviceId && user && !user.deviceId) {
+        storage.updateUser(user.id, {
+          deviceId: req.body.deviceId,
+          deviceName: req.body.deviceInfo?.deviceName,
+          deviceModel: req.body.deviceInfo?.deviceModel,
+          devicePlatform: req.body.deviceInfo?.devicePlatform,
+        }).catch(error => console.error("Failed to update user device info:", error));
+      }
+      
+      req.login(user, (err: any) => {
         if (err) {
           return next(err);
         }

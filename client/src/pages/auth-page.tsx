@@ -20,8 +20,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Lock, User, Mail, AlertCircle } from "lucide-react";
+import { Lock, User, Mail, AlertCircle, Smartphone } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getDeviceInfo } from "@/lib/device-utils";
 
 // Extended schema for login
 const loginSchema = z.object({
@@ -50,6 +51,7 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [, navigate] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
+  const [deviceInfo, setDeviceInfo] = useState(() => getDeviceInfo());
 
   // Redirect if already logged in
   useEffect(() => {
@@ -77,6 +79,10 @@ export default function AuthPage() {
       password: "",
       confirmPassword: "",
       acceptTerms: false,
+      deviceId: deviceInfo.deviceId,
+      deviceName: deviceInfo.deviceName,
+      deviceModel: deviceInfo.deviceModel,
+      devicePlatform: deviceInfo.devicePlatform,
     },
   });
 
@@ -85,13 +91,29 @@ export default function AuthPage() {
     loginMutation.mutate({
       username: values.username,
       password: values.password,
+      deviceId: deviceInfo.deviceId,
+      deviceInfo: {
+        deviceName: deviceInfo.deviceName,
+        deviceModel: deviceInfo.deviceModel,
+        devicePlatform: deviceInfo.devicePlatform
+      }
     });
   };
 
   // Handle register form submission
   const onRegisterSubmit = (values: RegisterValues) => {
     const { confirmPassword, acceptTerms, ...userData } = values;
-    registerMutation.mutate(userData);
+    
+    // Add device information
+    const userDataWithDevice = {
+      ...userData,
+      deviceId: deviceInfo.deviceId,
+      deviceName: deviceInfo.deviceName,
+      deviceModel: deviceInfo.deviceModel,
+      devicePlatform: deviceInfo.devicePlatform,
+    };
+    
+    registerMutation.mutate(userDataWithDevice);
   };
 
   return (
