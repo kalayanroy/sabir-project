@@ -52,7 +52,7 @@ type RegisterValues = z.infer<typeof registerSchema>;
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [, navigate] = useLocation();
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, loginMutation, registerMutation, loginBlockInfo } = useAuth();
   const [deviceInfo, setDeviceInfo] = useState(() => getDeviceInfo());
   const { deviceStatus, isLoading: isDeviceStatusLoading } = useDeviceStatus();
 
@@ -220,11 +220,29 @@ export default function AuthPage() {
                   <p className="text-muted-foreground">Sign in to your account</p>
                 </div>
 
-                {loginMutation.error && (
+                {/* Login Block Info with countdown timer */}
+                {loginBlockInfo && loginBlockInfo.isBlocked && (
                   <Alert variant="destructive" className="mb-4">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      {loginMutation.error.message}
+                      <div className="flex flex-col">
+                        <span>{loginBlockInfo.message}</span>
+                        {loginBlockInfo.remainingMinutes && (
+                          <span className="mt-1 font-medium">
+                            Time remaining: {loginBlockInfo.remainingMinutes} minute{loginBlockInfo.remainingMinutes !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                {/* Regular login error (not a block) */}
+                {loginMutation.error && !loginBlockInfo?.isBlocked && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {loginMutation.error.message || "Invalid username or password"}
                     </AlertDescription>
                   </Alert>
                 )}

@@ -250,16 +250,17 @@ export function setupAuth(app: Express) {
           // Failed login attempt - update counter and possibly block
           try {
             // Increment login attempts
+            const currentAttempts = deviceAttempt.loginAttempts || 0;
             const updatedAttempt = await db
               .update(deviceAttempts)
               .set({
-                loginAttempts: deviceAttempt.loginAttempts + 1,
+                loginAttempts: currentAttempts + 1,
                 lastLoginAttempt: new Date(),
               })
               .where(eq(deviceAttempts.deviceId, deviceId))
               .returning();
             
-            const newAttemptCount = updatedAttempt[0].loginAttempts;
+            const newAttemptCount = updatedAttempt[0].loginAttempts || 0;
             let blockMessage = "Invalid credentials";
             
             // Apply progressive timeouts based on number of attempts
