@@ -136,6 +136,14 @@ export function setupAuth(app: Express) {
       if (existingUserByEmail) {
         return res.status(400).send("Email already exists");
       }
+      
+      // Check if deviceId already exists (one account per device)
+      if (req.body.deviceId) {
+        const existingUserByDeviceId = await storage.getUserByDeviceId(req.body.deviceId);
+        if (existingUserByDeviceId) {
+          return res.status(400).send("An account is already registered from this device. Each device can only have one account.");
+        }
+      }
 
       // Hash password
       const hashedPassword = await hashPassword(req.body.password);
