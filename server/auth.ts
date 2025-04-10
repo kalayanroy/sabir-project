@@ -325,7 +325,23 @@ export function setupAuth(app: Express) {
     return res.json(blockedDevices);
   });
   
-  // Unblock a device
+  // Get all unblock requests
+  app.get("/api/admin/unblock-requests", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
+      return res.status(403).send("Unauthorized");
+    }
+    
+    try {
+      const { deviceAttemptActions } = require("./deviceAttemptActions");
+      const requests = await deviceAttemptActions.getUnblockRequests();
+      return res.json(requests);
+    } catch (error) {
+      console.error("Error fetching unblock requests:", error);
+      return res.status(500).send("Failed to fetch unblock requests");
+    }
+  });
+  
+  // Unblock a device (approve request)
   app.post("/api/admin/unblock-device", async (req, res) => {
     if (!req.isAuthenticated() || req.user.username !== "admin") {
       return res.status(403).send("Unauthorized");
@@ -346,7 +362,44 @@ export function setupAuth(app: Express) {
     return res.json({
       success: true,
       message: "Device unblocked successfully",
-      deviceAttempt: updated
+      deviceAttempt: updated,
+      status: "approved"
     });
+  });
+  
+  // Reject an unblock request
+  app.post("/api/admin/reject-unblock-request", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
+      return res.status(403).send("Unauthorized");
+    }
+    
+    const { deviceId, reason } = req.body;
+    
+    if (!deviceId) {
+      return res.status(400).send("Device ID is required");
+    }
+    
+    if (!reason) {
+      return res.status(400).send("Rejection reason is required");
+    }
+    
+    try {
+      const { deviceAttemptActions } = require("./deviceAttemptActions");
+      const updated = await deviceAttemptActions.rejectUnblockRequest(deviceId, reason);
+      
+      if (!updated) {
+        return res.status(404).send("Device not found");
+      }
+      
+      return res.json({
+        success: true,
+        message: "Unblock request rejected",
+        deviceAttempt: updated,
+        status: "rejected"
+      });
+    } catch (error) {
+      console.error("Error rejecting unblock request:", error);
+      return res.status(500).send(error instanceof Error ? error.message : "Failed to reject unblock request");
+    }
   });
 }

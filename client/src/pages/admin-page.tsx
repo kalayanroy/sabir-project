@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Shield, CheckCircle, AlertCircle } from "lucide-react";
 
@@ -101,10 +102,62 @@ export default function AdminPage() {
     setRequestDetailsOpen(true);
   };
 
+  // Mutation to reject a device unblock request
+  const rejectUnblockRequestMutation = useMutation({
+    mutationFn: async ({ deviceId, reason }: { deviceId: string; reason: string }) => {
+      const response = await apiRequest("POST", "/api/admin/reject-unblock-request", { deviceId, reason });
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Request rejected",
+        description: "The unblock request has been rejected.",
+        variant: "default",
+      });
+      setRequestDetailsOpen(false);
+      refetch();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to reject request",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // States for rejection
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+
   // Approve unblock request
   const handleApproveRequest = () => {
     if (selectedDevice) {
       unblockDeviceMutation.mutate(selectedDevice.deviceId);
+    }
+  };
+
+  // Reject unblock request
+  const handleRejectRequest = () => {
+    if (!isRejecting) {
+      setIsRejecting(true);
+      return;
+    }
+
+    if (!rejectionReason.trim()) {
+      toast({
+        title: "Rejection reason required",
+        description: "Please provide a reason for rejection.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedDevice) {
+      rejectUnblockRequestMutation.mutate({
+        deviceId: selectedDevice.deviceId,
+        reason: rejectionReason
+      });
     }
   };
 
@@ -243,30 +296,70 @@ export default function AdminPage() {
             </div>
           )}
           
-          <DialogFooter>
+          {/* Rejection reason input */}
+          {isRejecting && (
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-medium">
+                Rejection Reason:
+              </label>
+              <Textarea
+                placeholder="Please enter a reason for rejection..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 flex flex-col sm:flex-row mt-4">
             <Button
               variant="outline"
-              onClick={() => setRequestDetailsOpen(false)}
+              onClick={() => {
+                setIsRejecting(false);
+                setRequestDetailsOpen(false);
+              }}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
-            <Button 
-              onClick={handleApproveRequest}
-              disabled={unblockDeviceMutation.isPending}
-              className="gap-2"
-            >
-              {unblockDeviceMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4" />
-                  Approve Unblock
-                </>
-              )}
-            </Button>
+            
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button 
+                onClick={handleRejectRequest}
+                disabled={rejectUnblockRequestMutation.isPending || unblockDeviceMutation.isPending}
+                variant="destructive"
+                className="gap-2 w-full sm:w-auto"
+              >
+                {rejectUnblockRequestMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    {isRejecting ? "Confirm Reject" : "Reject"}
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                onClick={handleApproveRequest}
+                disabled={rejectUnblockRequestMutation.isPending || unblockDeviceMutation.isPending || isRejecting}
+                className="gap-2 w-full sm:w-auto"
+              >
+                {unblockDeviceMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    Approve
+                  </>
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
