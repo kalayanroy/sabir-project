@@ -62,11 +62,32 @@ type BlockedDevice = {
   unblockRequestMessage: string;
 };
 
+// User location history type
+type UserLocation = {
+  id: number;
+  userId: number;
+  username?: string;
+  email?: string;
+  eventType: 'login' | 'logout';
+  timestamp: string;
+  ipAddress?: string;
+  latitude?: number;
+  longitude?: number;
+  addressInfo?: {
+    city?: string;
+    state?: string;
+    country?: string;
+    formatted?: string;
+  };
+  deviceInfo?: string;
+};
+
 export default function AdminPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedDevice, setSelectedDevice] = useState<BlockedDevice | null>(null);
   const [requestDetailsOpen, setRequestDetailsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("devices");
 
   // Only admin can access this page
   if (!user || user.username !== "admin1") {
@@ -76,9 +97,9 @@ export default function AdminPage() {
   // Fetch all blocked devices
   const {
     data: blockedDevices,
-    isLoading,
-    error,
-    refetch,
+    isLoading: isLoadingDevices,
+    error: deviceError,
+    refetch: refetchDevices,
   } = useQuery<BlockedDevice[], Error>({
     queryKey: ["/api/admin/blocked-devices"],
     queryFn: async () => {
@@ -86,6 +107,29 @@ export default function AdminPage() {
       return await response.json();
     },
   });
+  
+  // Fetch location history
+  const {
+    data: locationHistory,
+    isLoading: isLoadingLocations,
+    error: locationError,
+    refetch: refetchLocations,
+  } = useQuery<UserLocation[], Error>({
+    queryKey: ["/api/admin/location-history"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/location-history");
+      return await response.json();
+    },
+    enabled: activeTab === "locations", // Only fetch when locations tab is active
+  });
+  
+  // Create a function to handle tab changes - automatically refresh data when switching to locations tab
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === "locations") {
+      refetchLocations();
+    }
+  };
 
   // Mutation to unblock a device
   const unblockDeviceMutation = useMutation({
@@ -100,7 +144,7 @@ export default function AdminPage() {
         variant: "default",
       });
       setRequestDetailsOpen(false);
-      refetch();
+      refetchDevices();
     },
     onError: (error: Error) => {
       toast({
@@ -130,7 +174,7 @@ export default function AdminPage() {
         variant: "default",
       });
       setRequestDetailsOpen(false);
-      refetch();
+      refetchDevices();
     },
     onError: (error: Error) => {
       toast({
@@ -182,6 +226,20 @@ export default function AdminPage() {
     return new Date(dateString).toLocaleString();
   };
 
+  // Helper function to refresh all data
+  const refreshAll = () => {
+    refetchDevices();
+    if (activeTab === "locations") {
+      refetchLocations();
+    }
+  };
+  
+  // Combined loading state
+  const isLoading = isLoadingDevices || (activeTab === "locations" && isLoadingLocations);
+  
+  // Combined error state
+  const error = activeTab === "devices" ? deviceError : locationError;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -196,7 +254,7 @@ export default function AdminPage() {
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl">Admin Dashboard</CardTitle>
-            <CardDescription>Error loading blocked devices</CardDescription>
+            <CardDescription>Error loading data</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="bg-destructive/10 p-4 rounded-md text-destructive flex items-center gap-2">
@@ -205,7 +263,7 @@ export default function AdminPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => refetch()}>Try Again</Button>
+            <Button onClick={refreshAll}>Try Again</Button>
           </CardFooter>
         </Card>
       </div>
@@ -221,58 +279,147 @@ export default function AdminPage() {
               <Shield className="h-6 w-6 text-primary" />
               Admin Dashboard
             </CardTitle>
-            <CardDescription>Manage blocked devices and unblock requests</CardDescription>
+            <CardDescription>Security management and monitoring tools</CardDescription>
           </div>
-          <Button size="sm" onClick={() => refetch()}>Refresh</Button>
+          <Button size="sm" onClick={refreshAll}>Refresh</Button>
         </CardHeader>
 
         <CardContent>
-          {blockedDevices && blockedDevices.length > 0 ? (
-            <Table>
-              <TableCaption>List of currently blocked devices</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Device ID</TableHead>
-                  <TableHead>Blocked At</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Attempts</TableHead>
-                  <TableHead>Unblock Request</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {blockedDevices.map((device) => (
-                  <TableRow key={device.id}>
-                    <TableCell className="font-mono">{device.deviceId}</TableCell>
-                    <TableCell>{formatDate(device.blockedAt)}</TableCell>
-                    <TableCell>{device.blockReason}</TableCell>
-                    <TableCell>{device.attempts}</TableCell>
-                    <TableCell>
-                      {device.unblockRequestSent ? (
-                        <Badge className="bg-amber-500">Pending</Badge>
-                      ) : (
-                        <Badge variant="outline">None</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={!device.unblockRequestSent}
-                        onClick={() => handleViewRequest(device)}
-                      >
-                        {device.unblockRequestSent ? "View Request" : "No Request"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center p-8 text-muted-foreground">
-              <p>No blocked devices found.</p>
-            </div>
-          )}
+          <Tabs defaultValue="devices" value={activeTab} onValueChange={handleTabChange} className="mb-6">
+            <TabsList className="grid w-full md:w-auto grid-cols-2">
+              <TabsTrigger value="devices" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                <span>Blocked Devices</span>
+              </TabsTrigger>
+              <TabsTrigger value="locations" className="flex items-center gap-2">
+                <Map className="h-4 w-4" />
+                <span>Location History</span>
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="devices" className="mt-6">
+              {blockedDevices && blockedDevices.length > 0 ? (
+                <Table>
+                  <TableCaption>List of currently blocked devices</TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Device ID</TableHead>
+                      <TableHead>Blocked At</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Attempts</TableHead>
+                      <TableHead>Unblock Request</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {blockedDevices.map((device) => (
+                      <TableRow key={device.id}>
+                        <TableCell className="font-mono text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
+                          {device.deviceId}
+                        </TableCell>
+                        <TableCell>{formatDate(device.blockedAt)}</TableCell>
+                        <TableCell>{device.blockReason}</TableCell>
+                        <TableCell>{device.attempts}</TableCell>
+                        <TableCell>
+                          {device.unblockRequestSent ? (
+                            <Badge className="bg-amber-500">Pending</Badge>
+                          ) : (
+                            <Badge variant="outline">None</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={!device.unblockRequestSent}
+                            onClick={() => handleViewRequest(device)}
+                          >
+                            {device.unblockRequestSent ? "View Request" : "No Request"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center p-8 text-muted-foreground">
+                  <p>No blocked devices found.</p>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="locations" className="mt-6">
+              {isLoadingLocations ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : locationHistory && locationHistory.length > 0 ? (
+                <Table>
+                  <TableCaption>User Login/Logout Location History</TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Event</TableHead>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>IP Address</TableHead>
+                      <TableHead>Device Info</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {locationHistory.map((location) => (
+                      <TableRow key={location.id}>
+                        <TableCell>
+                          <div className="font-medium">{location.username || "Unknown"}</div>
+                          <div className="text-xs text-muted-foreground">{location.email}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={location.eventType === 'login' ? 'default' : 'secondary'} className="flex items-center gap-1">
+                            {location.eventType === 'login' ? (
+                              <>
+                                <LogIn className="h-3 w-3" />
+                                Login
+                              </>
+                            ) : (
+                              <>
+                                <LogOut className="h-3 w-3" />
+                                Logout
+                              </>
+                            )}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatDate(location.timestamp)}</TableCell>
+                        <TableCell>
+                          {location.latitude && location.longitude ? (
+                            <div className="flex items-start gap-1">
+                              <MapPin className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                              <div>
+                                {location.addressInfo?.formatted || 
+                                 `${location.addressInfo?.city || ''} ${location.addressInfo?.state || ''} ${location.addressInfo?.country || ''}` || 
+                                 `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">No location data</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <code className="text-xs">{location.ipAddress || "N/A"}</code>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {location.deviceInfo || "N/A"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center p-8 text-muted-foreground">
+                  <p>No location history found.</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
