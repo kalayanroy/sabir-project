@@ -8,7 +8,7 @@ import { storage } from "./storage";
 import { User as SelectUser, User, deviceAttempts, LocationData } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { recordUserLocation } from "./locationService";
+import { recordUserLocation, getUserLocationHistory, getAllUsersLocationHistory } from "./locationService";
 
 declare global {
   namespace Express {
@@ -354,9 +354,23 @@ export function setupAuth(app: Express) {
           }).catch(error => console.error("Failed to update user device info:", error));
         }
         
-        req.login(user, (err: any) => {
+        req.login(user, async (err: any) => {
           if (err) {
             return next(err);
+          }
+          
+          // Record login location
+          try {
+            // Cast locationData to proper type and record login event
+            await recordUserLocation(
+              user.id, 
+              'login', 
+              locationData as LocationData
+            );
+            console.log(`Recorded login location for user ${user.id}`);
+          } catch (error) {
+            console.error("Failed to record login location:", error);
+            // Don't block the login if location recording fails
           }
           
           // Return user data without password
@@ -370,7 +384,34 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/logout", (req, res, next) => {
+  app.post("/api/logout", async (req, res, next) => {
+    // Extract location data from request if available
+    const locationData = req.body.locationData || {};
+    
+    // Get IP address from request
+    const ipAddress = req.headers['x-forwarded-for'] || 
+                      req.socket.remoteAddress || 
+                      'unknown';
+                      
+    if (typeof ipAddress === 'string') {
+      locationData.ipAddress = ipAddress;
+    }
+    
+    // If user is authenticated, record the logout location
+    if (req.isAuthenticated() && req.user) {
+      try {
+        await recordUserLocation(
+          req.user.id, 
+          'logout', 
+          locationData as LocationData
+        );
+        console.log(`Recorded logout location for user ${req.user.id}`);
+      } catch (error) {
+        console.error("Failed to record logout location:", error);
+        // Don't block logout if location recording fails
+      }
+    }
+    
     req.logout((err) => {
       if (err) return next(err);
       res.sendStatus(200);
@@ -461,6 +502,41 @@ export function setupAuth(app: Express) {
       .where(eq(deviceAttempts.isBlocked, true));
     
     return res.json(blockedDevices);
+  });
+  
+  // Get all user location history (admin only)
+  app.get("/api/admin/user-locations", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.username !== "admin1") {
+      return res.status(403).send("Unauthorized");
+    }
+    
+    try {
+      const locationHistory = await getAllUsersLocationHistory();
+      return res.json(locationHistory);
+    } catch (error) {
+      console.error("Error fetching user location history:", error);
+      return res.status(500).send("Failed to fetch location history");
+    }
+  });
+  
+  // Get location history for a specific user (admin only)
+  app.get("/api/admin/user-locations/:userId", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.username !== "admin1") {
+      return res.status(403).send("Unauthorized");
+    }
+    
+    const userId = parseInt(req.params.userId);
+    if (isNaN(userId)) {
+      return res.status(400).send("Invalid user ID");
+    }
+    
+    try {
+      const locationHistory = await getUserLocationHistory(userId);
+      return res.json(locationHistory);
+    } catch (error) {
+      console.error(`Error fetching location history for user ${userId}:`, error);
+      return res.status(500).send("Failed to fetch location history");
+    }
   });
   
   // Get all unblock requests

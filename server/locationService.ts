@@ -156,19 +156,17 @@ export async function recordUserLocation(
  * Get location history for a specific user
  */
 export async function getUserLocationHistory(userId: number) {
-  return await db
-    .select()
-    .from(userLocationHistory)
-    .where(eq(userLocationHistory.userId, userId))
-    .orderBy({ timestamp: 'desc' });
+  return await db.query.userLocationHistory.findMany({
+    where: eq(userLocationHistory.userId, userId),
+    orderBy: (ulh, { desc }) => [desc(ulh.timestamp)]
+  });
 }
 
 /**
  * Get all users' location history (admin only)
  */
 export async function getAllUsersLocationHistory() {
-  return await db
-    .select()
-    .from(userLocationHistory)
-    .orderBy({ timestamp: 'desc' });
+  return await db.query.userLocationHistory.findMany({
+    orderBy: (ulh, { desc }) => [desc(ulh.timestamp)]
+  });
 }
