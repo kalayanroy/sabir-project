@@ -54,7 +54,7 @@ export default function AdminPage() {
   const [requestDetailsOpen, setRequestDetailsOpen] = useState(false);
 
   // Only admin can access this page
-  if (!user || user.username !== "admin") {
+  if (!user || user.username !== "admin1") {
     return <Redirect to="/" />;
   }
 

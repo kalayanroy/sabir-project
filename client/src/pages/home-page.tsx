@@ -77,7 +77,7 @@ export default function HomePage() {
                     </a>
                   </Button>
                 </li>
-                {user.username === "admin" && (
+                {user.username === "admin1" && (
                   <li>
                     <Button variant="ghost" className="w-full justify-start font-normal" asChild>
                       <a href="/admin" className="flex items-center">
@@ -206,7 +206,7 @@ export default function HomePage() {
             </Card>
             
             {/* Admin Section - Only visible to admin users */}
-            {user.username === "admin" && (
+            {user.username === "admin1" && (
               <Card className="mb-6 border border-red-200">
                 <CardContent className="pt-6">
                   <div className="flex items-center mb-4">

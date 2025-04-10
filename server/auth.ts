@@ -313,7 +313,7 @@ export function setupAuth(app: Express) {
   
   // Get all blocked devices
   app.get("/api/admin/blocked-devices", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin") {
+    if (!req.isAuthenticated() || req.user.username !== "admin1") {
       return res.status(403).send("Unauthorized");
     }
     
@@ -327,7 +327,7 @@ export function setupAuth(app: Express) {
   
   // Get all unblock requests
   app.get("/api/admin/unblock-requests", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin") {
+    if (!req.isAuthenticated() || req.user.username !== "admin1") {
       return res.status(403).send("Unauthorized");
     }
     
@@ -343,7 +343,7 @@ export function setupAuth(app: Express) {
   
   // Unblock a device (approve request)
   app.post("/api/admin/unblock-device", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin") {
+    if (!req.isAuthenticated() || req.user.username !== "admin1") {
       return res.status(403).send("Unauthorized");
     }
     
@@ -369,7 +369,7 @@ export function setupAuth(app: Express) {
   
   // Reject an unblock request
   app.post("/api/admin/reject-unblock-request", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin") {
+    if (!req.isAuthenticated() || req.user.username !== "admin1") {
       return res.status(403).send("Unauthorized");
     }
     
