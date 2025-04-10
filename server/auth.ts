@@ -125,24 +125,42 @@ export function setupAuth(app: Express) {
         return res.status(400).send("Missing required fields");
       }
       
+      // Check if deviceId is provided
+      if (!req.body.deviceId) {
+        return res.status(400).send("Device ID is required for registration");
+      }
+      
+      // Check if device is blocked
+      const deviceAttempt = await storage.getDeviceAttempt(req.body.deviceId);
+      if (deviceAttempt && deviceAttempt.isBlocked) {
+        return res.status(403).send(
+          "This device has been blocked due to too many registration attempts. " +
+          "Please submit an unblock request to the administrator."
+        );
+      }
+      
       // Check if username already exists
       const existingUserByUsername = await storage.getUserByUsername(req.body.username);
       if (existingUserByUsername) {
+        // Increment failed attempt
+        await storage.incrementDeviceAttempt(req.body.deviceId);
         return res.status(400).send("Username already exists");
       }
 
       // Check if email already exists
       const existingUserByEmail = await storage.getUserByEmail(req.body.email);
       if (existingUserByEmail) {
+        // Increment failed attempt
+        await storage.incrementDeviceAttempt(req.body.deviceId);
         return res.status(400).send("Email already exists");
       }
       
       // Check if deviceId already exists (one account per device)
-      if (req.body.deviceId) {
-        const existingUserByDeviceId = await storage.getUserByDeviceId(req.body.deviceId);
-        if (existingUserByDeviceId) {
-          return res.status(400).send("An account is already registered from this device. Each device can only have one account.");
-        }
+      const existingUserByDeviceId = await storage.getUserByDeviceId(req.body.deviceId);
+      if (existingUserByDeviceId) {
+        // Increment failed attempt
+        await storage.incrementDeviceAttempt(req.body.deviceId);
+        return res.status(400).send("An account is already registered from this device. Each device can only have one account.");
       }
 
       // Hash password
@@ -158,6 +176,12 @@ export function setupAuth(app: Express) {
         ...userData,
         password: "[REDACTED]"
       });
+      
+      // If we get here, the registration is successful
+      // Reset any tracking of failed attempts for this device
+      if (deviceAttempt) {
+        await storage.unblockDevice(req.body.deviceId);
+      }
       
       const user = await storage.createUser(userData);
 
@@ -219,5 +243,108 @@ export function setupAuth(app: Express) {
     // Return user data without password
     const { password, ...userData } = req.user;
     res.json(userData);
+  });
+  
+  // Endpoint to check if a device is blocked
+  app.get("/api/device-status", async (req, res) => {
+    const deviceId = req.query.deviceId as string;
+    
+    if (!deviceId) {
+      return res.status(400).send("Device ID is required");
+    }
+    
+    const deviceAttempt = await storage.getDeviceAttempt(deviceId);
+    if (!deviceAttempt) {
+      return res.json({ 
+        isBlocked: false,
+        attempts: 0,
+        message: "No registration attempts yet"
+      });
+    }
+    
+    return res.json({
+      isBlocked: deviceAttempt.isBlocked,
+      attempts: deviceAttempt.attempts,
+      message: deviceAttempt.isBlocked 
+        ? "This device is blocked due to too many registration attempts" 
+        : "This device is not blocked",
+      unblockRequestSent: deviceAttempt.unblockRequestSent
+    });
+  });
+
+  // Endpoint to submit an unblock request
+  app.post("/api/submit-unblock-request", async (req, res) => {
+    const { deviceId, message } = req.body;
+    
+    if (!deviceId) {
+      return res.status(400).send("Device ID is required");
+    }
+    
+    if (!message) {
+      return res.status(400).send("Message is required");
+    }
+    
+    const deviceAttempt = await storage.getDeviceAttempt(deviceId);
+    
+    if (!deviceAttempt) {
+      return res.status(404).send("Device not found");
+    }
+    
+    if (!deviceAttempt.isBlocked) {
+      return res.status(400).send("This device is not blocked");
+    }
+    
+    if (deviceAttempt.unblockRequestSent) {
+      return res.status(400).send("An unblock request has already been submitted");
+    }
+    
+    const updated = await storage.submitUnblockRequest(deviceId, message);
+    
+    return res.json({
+      success: true,
+      message: "Unblock request submitted successfully",
+      deviceAttempt: updated
+    });
+  });
+  
+  // Admin endpoints
+  
+  // Get all blocked devices
+  app.get("/api/admin/blocked-devices", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
+      return res.status(403).send("Unauthorized");
+    }
+    
+    const blockedDevices = await db
+      .select()
+      .from(deviceAttempts)
+      .where(eq(deviceAttempts.isBlocked, true));
+    
+    return res.json(blockedDevices);
+  });
+  
+  // Unblock a device
+  app.post("/api/admin/unblock-device", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
+      return res.status(403).send("Unauthorized");
+    }
+    
+    const { deviceId } = req.body;
+    
+    if (!deviceId) {
+      return res.status(400).send("Device ID is required");
+    }
+    
+    const updated = await storage.unblockDevice(deviceId);
+    
+    if (!updated) {
+      return res.status(404).send("Device not found");
+    }
+    
+    return res.json({
+      success: true,
+      message: "Device unblocked successfully",
+      deviceAttempt: updated
+    });
   });
 }

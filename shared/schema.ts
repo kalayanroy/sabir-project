@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -11,6 +11,19 @@ export const users = pgTable("users", {
   deviceName: text("deviceName"),
   deviceModel: text("deviceModel"),
   devicePlatform: text("devicePlatform"),
+});
+
+// Track device registration attempts and blocks
+export const deviceAttempts = pgTable("deviceAttempts", {
+  id: serial("id").primaryKey(),
+  deviceId: text("deviceId").notNull().unique(),
+  attempts: integer("attempts").default(0),
+  lastAttempt: timestamp("lastAttempt").defaultNow(),
+  isBlocked: boolean("isBlocked").default(false),
+  blockedAt: timestamp("blockedAt"),
+  blockReason: text("blockReason"),
+  unblockRequestSent: boolean("unblockRequestSent").default(false),
+  unblockRequestMessage: text("unblockRequestMessage"),
 });
 
 // Create base schema and add custom validation
@@ -44,3 +57,5 @@ export const loginUserSchema = z.object({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
 export type User = typeof users.$inferSelect;
+export type DeviceAttempt = typeof deviceAttempts.$inferSelect;
+export type InsertDeviceAttempt = typeof deviceAttempts.$inferInsert;
