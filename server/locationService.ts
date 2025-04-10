@@ -132,9 +132,11 @@ export async function recordUserLocation(
       latitude: locationData.latitude,
       longitude: locationData.longitude,
       ipAddress: locationData.ipAddress,
-      locationAddress: geoData.address,
-      city: geoData.city,
-      country: geoData.country,
+      addressInfo: {
+        formatted: geoData.address,
+        city: geoData.city,
+        country: geoData.country,
+      },
       deviceInfo: JSON.stringify({
         timestamp: new Date().toISOString(),
         event: eventType,

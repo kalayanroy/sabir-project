@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -63,15 +63,15 @@ export const loginUserSchema = z.object({
 // User location history for tracking login/logout events with geolocation
 export const userLocationHistory = pgTable("userLocationHistory", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull().references(() => users.id),
+  userId: integer("userId").notNull(),
+  username: text("username"),
+  email: text("email"),
   timestamp: timestamp("timestamp").defaultNow(),
   eventType: text("eventType").notNull(), // 'login' or 'logout'
   latitude: doublePrecision("latitude"),
   longitude: doublePrecision("longitude"),
   ipAddress: text("ipAddress"),
-  locationAddress: text("locationAddress"), // Address from reverse geocoding
-  city: text("city"),
-  country: text("country"),
+  addressInfo: jsonb("addressInfo"), // JSON with address details
   deviceInfo: text("deviceInfo"), // JSON string with device details
 });
 
