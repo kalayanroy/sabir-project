@@ -103,11 +103,19 @@ export default function AuthPage() {
   // Handle register form submission
   const onRegisterSubmit = (values: RegisterValues) => {
     console.log("Register form values:", values);
+    
+    // Force get current values from form
+    const currentUsername = registerForm.getValues('username');
+    const currentEmail = registerForm.getValues('email');
+    
+    // Create user data with current values
     const { confirmPassword, acceptTerms, ...userData } = values;
     
-    // Add device information
+    // Add device information and ensure username and email are set
     const userDataWithDevice = {
       ...userData,
+      username: currentUsername, // Ensure username is set from current value
+      email: currentEmail, // Ensure email is set from current value
       deviceId: deviceInfo.deviceId,
       deviceName: deviceInfo.deviceName,
       deviceModel: deviceInfo.deviceModel,
@@ -115,6 +123,27 @@ export default function AuthPage() {
     };
     
     console.log("Data being sent to server:", userDataWithDevice);
+    
+    // Additional validation
+    if (!userDataWithDevice.username) {
+      console.error("Username is empty!");
+      registerForm.setError('username', { 
+        type: 'manual', 
+        message: 'Username is required' 
+      });
+      return;
+    }
+    
+    if (!userDataWithDevice.email) {
+      console.error("Email is empty!");
+      registerForm.setError('email', { 
+        type: 'manual', 
+        message: 'Email is required' 
+      });
+      return;
+    }
+    
+    console.log("Register mutation sending data:", userDataWithDevice);
     registerMutation.mutate(userDataWithDevice);
   };
 
@@ -263,36 +292,30 @@ export default function AuthPage() {
 
                 <Form {...registerForm}>
                   <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                    <FormField
-                      control={registerForm.control}
-                      name="username"
-                      render={({ field }) => {
-                        console.log("Username field value:", field.value);
-                        return (
-                          <FormItem>
-                            <FormLabel>Username</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                <input 
-                                  type="text" 
-                                  placeholder="Choose a username" 
-                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
-                                  onChange={(e) => {
-                                    console.log("Username input changed:", e.target.value);
-                                    field.onChange(e.target.value);
-                                  }}
-                                  value={field.value || ""}
-                                  name={field.name}
-                                  onBlur={field.onBlur}
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        );
-                      }}
-                    />
+                    <div className="space-y-2">
+                      <div className="font-medium">
+                        <label htmlFor="username-direct">Username</label>
+                      </div>
+                      <div className="relative">
+                        <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <input 
+                          id="username-direct"
+                          type="text" 
+                          name="username"
+                          placeholder="Choose a username" 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
+                          onChange={(e) => {
+                            console.log("Direct username input changed:", e.target.value);
+                            registerForm.setValue('username', e.target.value);
+                          }}
+                        />
+                      </div>
+                      {registerForm.formState.errors.username && (
+                        <p className="text-sm font-medium text-destructive">
+                          {registerForm.formState.errors.username.message}
+                        </p>
+                      )}
+                    </div>
 
                     <div className="space-y-2">
                       <div className="font-medium">
@@ -303,6 +326,7 @@ export default function AuthPage() {
                         <input 
                           id="email-direct"
                           type="text" 
+                          name="email"
                           placeholder="Enter your email" 
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
                           onChange={(e) => {
