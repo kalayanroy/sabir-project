@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { insertUserSchema } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
+import { useDeviceStatus } from "@/hooks/use-device-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,9 +21,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Lock, User, Mail, AlertCircle, Smartphone } from "lucide-react";
+import { Lock, User, Mail, AlertCircle, Smartphone, ShieldAlert } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getDeviceInfo } from "@/lib/device-utils";
+import { UnblockRequestForm } from "@/components/unblock-request-form";
 
 // Extended schema for login
 const loginSchema = z.object({
@@ -52,6 +54,7 @@ export default function AuthPage() {
   const [, navigate] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
   const [deviceInfo, setDeviceInfo] = useState(() => getDeviceInfo());
+  const { deviceStatus, isLoading: isDeviceStatusLoading } = useDeviceStatus();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -147,6 +150,57 @@ export default function AuthPage() {
     registerMutation.mutate(userDataWithDevice);
   };
 
+  // Show loading spinner while checking device status
+  if (isDeviceStatusLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+  
+  // If device is blocked, show unblock request form
+  if (deviceStatus?.isBlocked) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col md:flex-row">
+        {/* Form Side */}
+        <div className="w-full md:w-1/2 flex items-center justify-center p-6">
+          <div className="w-full max-w-md">
+            <UnblockRequestForm />
+          </div>
+        </div>
+        
+        {/* Hero Side */}
+        <div className="w-full md:w-1/2 bg-primary/5 p-10 flex items-center justify-center">
+          <div className="max-w-md">
+            <div className="flex items-center space-x-2 mb-6">
+              <ShieldAlert className="h-8 w-8 text-primary" />
+              <h2 className="text-2xl font-bold">Device Blocked</h2>
+            </div>
+            <h1 className="text-3xl font-bold mb-4">
+              Secure Device Registration
+            </h1>
+            <p className="text-lg mb-6">
+              Your device has been blocked due to multiple registration attempts.
+              For security reasons, each device is limited to one account and we 
+              restrict the number of registration attempts.
+            </p>
+            
+            <div className="bg-white/50 backdrop-blur-sm rounded-lg p-6 border border-accent">
+              <h3 className="font-medium text-lg mb-2">Why was your device blocked?</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Multiple failed registration attempts</li>
+                <li>Duplicate account creation attempts</li>
+                <li>Suspicious activity detected</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Normal login/register flow
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Form Side */}
