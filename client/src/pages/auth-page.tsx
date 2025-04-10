@@ -294,36 +294,29 @@ export default function AuthPage() {
                       }}
                     />
 
-                    <FormField
-                      control={registerForm.control}
-                      name="email"
-                      render={({ field }) => {
-                        console.log("Email field value:", field.value);
-                        return (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                <input 
-                                  type="text" 
-                                  placeholder="Enter your email" 
-                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
-                                  onChange={(e) => {
-                                    console.log("Email input changed:", e.target.value);
-                                    field.onChange(e.target.value);
-                                  }}
-                                  value={field.value || ""}
-                                  name={field.name}
-                                  onBlur={field.onBlur}
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        );
-                      }}
-                    />
+                    <div className="space-y-2">
+                      <div className="font-medium">
+                        <label htmlFor="email-direct">Email</label>
+                      </div>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <input 
+                          id="email-direct"
+                          type="text" 
+                          placeholder="Enter your email" 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
+                          onChange={(e) => {
+                            console.log("Direct email input changed:", e.target.value);
+                            registerForm.setValue('email', e.target.value);
+                          }}
+                        />
+                      </div>
+                      {registerForm.formState.errors.email && (
+                        <p className="text-sm font-medium text-destructive">
+                          {registerForm.formState.errors.email.message}
+                        </p>
+                      )}
+                    </div>
 
                     <FormField
                       control={registerForm.control}
