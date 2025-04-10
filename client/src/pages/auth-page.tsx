@@ -266,44 +266,65 @@ export default function AuthPage() {
                     <FormField
                       control={registerForm.control}
                       name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                              <Input 
-                                placeholder="Choose a username" 
-                                className="pl-10" 
-                                {...field} 
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        console.log("Username field value:", field.value);
+                        return (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  type="text" 
+                                  placeholder="Choose a username" 
+                                  className="pl-10"
+                                  onChange={(e) => {
+                                    console.log("Username input changed:", e.target.value);
+                                    field.onChange(e);
+                                  }}
+                                  value={field.value || ""}
+                                  name={field.name}
+                                  onBlur={field.onBlur}
+                                  ref={field.ref}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
 
                     <FormField
                       control={registerForm.control}
                       name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                              <Input 
-                                type="email" 
-                                placeholder="Enter your email" 
-                                className="pl-10" 
-                                {...field} 
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        console.log("Email field value:", field.value);
+                        return (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  type="text" 
+                                  placeholder="Enter your email" 
+                                  className="pl-10"
+                                  onChange={(e) => {
+                                    console.log("Email input changed:", e.target.value);
+                                    field.onChange(e);
+                                  }}
+                                  value={field.value || ""}
+                                  name={field.name}
+                                  onBlur={field.onBlur}
+                                  ref={field.ref}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
 
                     <FormField
