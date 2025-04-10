@@ -103,6 +103,15 @@ export async function recordUserLocation(
   locationData: LocationData
 ) {
   try {
+    // Get user info to include in location history
+    const userInfo = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.id, userId),
+      columns: {
+        username: true,
+        email: true
+      }
+    });
+    
     // Make sure we have coordinates
     if (!locationData.latitude || !locationData.longitude) {
       console.log(`[Location] No coordinates provided for user ${userId} ${eventType} event`);
@@ -110,6 +119,8 @@ export async function recordUserLocation(
       // Still record the event but without location data
       await db.insert(userLocationHistory).values({
         userId,
+        username: userInfo?.username,
+        email: userInfo?.email,
         eventType,
         ipAddress: locationData.ipAddress,
         deviceInfo: JSON.stringify({
@@ -128,6 +139,8 @@ export async function recordUserLocation(
     // Record the location history
     await db.insert(userLocationHistory).values({
       userId,
+      username: userInfo?.username,
+      email: userInfo?.email,
       eventType,
       latitude: locationData.latitude,
       longitude: locationData.longitude,

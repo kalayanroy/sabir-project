@@ -24,6 +24,8 @@ export interface IStorage {
   blockDevice(deviceId: string, reason: string): Promise<DeviceAttempt>;
   unblockDevice(deviceId: string): Promise<DeviceAttempt | undefined>;
   submitUnblockRequest(deviceId: string, message: string): Promise<DeviceAttempt | undefined>;
+  getBlockedDevices(): Promise<DeviceAttempt[]>;
+  rejectUnblockRequest(deviceId: string, reason: string): Promise<DeviceAttempt | undefined>;
   
   sessionStore: session.Store;
 }
@@ -191,6 +193,35 @@ export class DatabaseStorage implements IStorage {
       .set({
         unblockRequestSent: true,
         unblockRequestMessage: message
+      })
+      .where(eq(deviceAttempts.deviceId, deviceId))
+      .returning();
+    
+    return updated;
+  }
+  
+  async getBlockedDevices(): Promise<DeviceAttempt[]> {
+    return await db
+      .select()
+      .from(deviceAttempts)
+      .where(eq(deviceAttempts.isBlocked, true))
+      .orderBy(deviceAttempts.blockedAt);
+  }
+  
+  async rejectUnblockRequest(deviceId: string, reason: string): Promise<DeviceAttempt | undefined> {
+    const existing = await this.getDeviceAttempt(deviceId);
+    
+    if (!existing || !existing.isBlocked || !existing.unblockRequestSent) {
+      return undefined;
+    }
+    
+    // Update block reason with rejection reason but keep the device blocked
+    const [updated] = await db
+      .update(deviceAttempts)
+      .set({
+        unblockRequestSent: false,
+        unblockRequestMessage: null,
+        blockReason: `Request rejected: ${reason}`
       })
       .where(eq(deviceAttempts.deviceId, deviceId))
       .returning();
