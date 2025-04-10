@@ -113,6 +113,18 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      console.log("Registration request body:", req.body);
+      
+      // Validate required fields
+      if (!req.body.username || !req.body.email || !req.body.password) {
+        console.log("Missing required fields:", { 
+          username: !!req.body.username, 
+          email: !!req.body.email, 
+          password: !!req.body.password 
+        });
+        return res.status(400).send("Missing required fields");
+      }
+      
       // Check if username already exists
       const existingUserByUsername = await storage.getUserByUsername(req.body.username);
       if (existingUserByUsername) {
@@ -129,10 +141,17 @@ export function setupAuth(app: Express) {
       const hashedPassword = await hashPassword(req.body.password);
       
       // Create user with hashed password
-      const user = await storage.createUser({
+      const userData = {
         ...req.body,
         password: hashedPassword,
+      };
+      
+      console.log("Creating user with data:", {
+        ...userData,
+        password: "[REDACTED]"
       });
+      
+      const user = await storage.createUser(userData);
 
       // Log the user in
       req.login(user, (err) => {
@@ -143,6 +162,7 @@ export function setupAuth(app: Express) {
         res.status(201).json(userData);
       });
     } catch (error) {
+      console.error("Registration error:", error);
       next(error);
     }
   });

@@ -102,6 +102,7 @@ export default function AuthPage() {
 
   // Handle register form submission
   const onRegisterSubmit = (values: RegisterValues) => {
+    console.log("Register form values:", values);
     const { confirmPassword, acceptTerms, ...userData } = values;
     
     // Add device information
@@ -113,6 +114,7 @@ export default function AuthPage() {
       devicePlatform: deviceInfo.devicePlatform,
     };
     
+    console.log("Data being sent to server:", userDataWithDevice);
     registerMutation.mutate(userDataWithDevice);
   };
 
