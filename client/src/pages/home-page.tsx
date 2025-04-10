@@ -1,0 +1,191 @@
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { 
+  LogOut, 
+  User, 
+  Settings, 
+  HelpCircle, 
+  Shield, 
+  Edit, 
+  Lock, 
+  LogIn,
+  ChevronRight
+} from "lucide-react";
+
+export default function HomePage() {
+  const { user, logoutMutation } = useAuth();
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="bg-primary text-white shadow-md">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center">
+            <Lock className="h-6 w-6 mr-2" />
+            <h1 className="text-xl font-medium">SecureLogin</h1>
+          </div>
+          <div className="flex items-center">
+            <div className="hidden md:block mr-4">
+              <span className="text-sm">{user.email}</span>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white hover:bg-white/20" 
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </header>
+      
+      {/* Main Content */}
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <div className="hidden md:block w-64 bg-card shadow-md">
+          <div className="p-4">
+            <div className="flex items-center mb-6">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+                <User className="h-5 w-5" />
+              </div>
+              <div className="ml-3">
+                <p className="font-medium">{user.username}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
+            </div>
+            
+            <nav>
+              <ul className="space-y-1">
+                <li>
+                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                    <a href="#" className="flex items-center">
+                      <User className="mr-3 h-5 w-5 text-primary" />
+                      Dashboard
+                    </a>
+                  </Button>
+                </li>
+                <li>
+                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                    <a href="#" className="flex items-center">
+                      <Edit className="mr-3 h-5 w-5 text-muted-foreground" />
+                      Profile
+                    </a>
+                  </Button>
+                </li>
+                <li>
+                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                    <a href="#" className="flex items-center">
+                      <Settings className="mr-3 h-5 w-5 text-muted-foreground" />
+                      Settings
+                    </a>
+                  </Button>
+                </li>
+                <li>
+                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                    <a href="#" className="flex items-center">
+                      <HelpCircle className="mr-3 h-5 w-5 text-muted-foreground" />
+                      Help
+                    </a>
+                  </Button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+        
+        {/* Content Area */}
+        <div className="flex-1 p-6 bg-background">
+          <div className="container mx-auto">
+            <h2 className="text-2xl font-medium mb-6">Welcome Back, {user.username}!</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-start">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-4">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Account Information</h3>
+                      <p className="text-muted-foreground mb-4">Manage your account details and preferences</p>
+                      <Button variant="link" className="p-0 h-auto flex items-center text-primary">
+                        <span>Edit Profile</span>
+                        <ChevronRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-start">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-4">
+                      <Shield className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Security Settings</h3>
+                      <p className="text-muted-foreground mb-4">Update your password and security preferences</p>
+                      <Button variant="link" className="p-0 h-auto flex items-center text-primary">
+                        <span>Manage Security</span>
+                        <ChevronRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center mr-4">
+                      <LogIn className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Successful login</p>
+                      <p className="text-sm text-muted-foreground">Today, 10:30 AM</p>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-4">
+                      <Edit className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Profile updated</p>
+                      <p className="text-sm text-muted-foreground">Yesterday, 2:15 PM</p>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center mr-4">
+                      <Lock className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Password changed</p>
+                      <p className="text-sm text-muted-foreground">Dec 10, 2023, 9:45 AM</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
