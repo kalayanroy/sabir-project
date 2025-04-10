@@ -24,6 +24,12 @@ export const deviceAttempts = pgTable("deviceAttempts", {
   blockReason: text("blockReason"),
   unblockRequestSent: boolean("unblockRequestSent").default(false),
   unblockRequestMessage: text("unblockRequestMessage"),
+  
+  // Login attempt tracking
+  loginAttempts: integer("loginAttempts").default(0),
+  lastLoginAttempt: timestamp("lastLoginAttempt"),
+  loginBlockExpiresAt: timestamp("loginBlockExpiresAt"),
+  loginBlockLevel: integer("loginBlockLevel").default(0), // 0: none, 1: 5min, 2: 15min, 3: 24h
 });
 
 // Create base schema and add custom validation

@@ -201,35 +201,159 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: User | false, info: any) => {
-      if (err) {
-        return next(err);
-      }
-      if (!user) {
-        return res.status(401).send(info?.message || "Invalid credentials");
+  app.post("/api/login", async (req, res, next) => {
+    // Check for deviceId in the request
+    const deviceId = req.body.deviceId;
+    if (!deviceId) {
+      return res.status(400).send("Device ID is required for login");
+    }
+    
+    // Check if device is blocked for login attempts
+    try {
+      let deviceAttempt = await storage.getDeviceAttempt(deviceId);
+      
+      // If no device record exists yet, create one
+      if (!deviceAttempt) {
+        deviceAttempt = await storage.incrementDeviceAttempt(deviceId);
+        deviceAttempt.loginAttempts = 0;
       }
       
-      // If deviceId is in request but not in user, update the user record
-      if (req.body.deviceId && user && !user.deviceId) {
-        storage.updateUser(user.id, {
-          deviceId: req.body.deviceId,
-          deviceName: req.body.deviceInfo?.deviceName,
-          deviceModel: req.body.deviceInfo?.deviceModel,
-          devicePlatform: req.body.deviceInfo?.devicePlatform,
-        }).catch(error => console.error("Failed to update user device info:", error));
+      // Check if device is permanently blocked
+      if (deviceAttempt.isBlocked) {
+        return res.status(403).send(
+          "This device has been blocked. Please submit an unblock request to the administrator."
+        );
       }
       
-      req.login(user, (err: any) => {
+      // Check if there's a temporary login block in effect
+      if (deviceAttempt.loginBlockExpiresAt) {
+        const now = new Date();
+        const blockExpiry = new Date(deviceAttempt.loginBlockExpiresAt);
+        
+        if (now < blockExpiry) {
+          // Still blocked
+          const remainingMinutes = Math.ceil((blockExpiry.getTime() - now.getTime()) / (60 * 1000));
+          
+          return res.status(403).send(
+            `Too many failed login attempts. Please try again in ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`
+          );
+        }
+      }
+      
+      // Proceed with authentication
+      passport.authenticate("local", async (err: any, user: User | false, info: any) => {
         if (err) {
           return next(err);
         }
         
-        // Return user data without password
-        const { password, ...userData } = user;
-        return res.status(200).json(userData);
-      });
-    })(req, res, next);
+        if (!user) {
+          // Failed login attempt - update counter and possibly block
+          try {
+            // Increment login attempts
+            const updatedAttempt = await db
+              .update(deviceAttempts)
+              .set({
+                loginAttempts: deviceAttempt.loginAttempts + 1,
+                lastLoginAttempt: new Date(),
+              })
+              .where(eq(deviceAttempts.deviceId, deviceId))
+              .returning();
+            
+            const newAttemptCount = updatedAttempt[0].loginAttempts;
+            let blockMessage = "Invalid credentials";
+            
+            // Apply progressive timeouts based on number of attempts
+            if (newAttemptCount >= 6) {
+              // Block for 24 hours (level 3)
+              const expiryTime = new Date();
+              expiryTime.setHours(expiryTime.getHours() + 24);
+              
+              await db
+                .update(deviceAttempts)
+                .set({
+                  loginBlockLevel: 3,
+                  loginBlockExpiresAt: expiryTime,
+                })
+                .where(eq(deviceAttempts.deviceId, deviceId));
+              
+              blockMessage = "Too many failed login attempts. Your account is locked for 24 hours.";
+            } 
+            else if (newAttemptCount >= 5) {
+              // Block for 15 minutes (level 2)
+              const expiryTime = new Date();
+              expiryTime.setMinutes(expiryTime.getMinutes() + 15);
+              
+              await db
+                .update(deviceAttempts)
+                .set({
+                  loginBlockLevel: 2,
+                  loginBlockExpiresAt: expiryTime,
+                })
+                .where(eq(deviceAttempts.deviceId, deviceId));
+              
+              blockMessage = "Too many failed login attempts. Please try again in 15 minutes.";
+            }
+            else if (newAttemptCount >= 3) {
+              // Block for 5 minutes (level 1)
+              const expiryTime = new Date();
+              expiryTime.setMinutes(expiryTime.getMinutes() + 5);
+              
+              await db
+                .update(deviceAttempts)
+                .set({
+                  loginBlockLevel: 1,
+                  loginBlockExpiresAt: expiryTime,
+                })
+                .where(eq(deviceAttempts.deviceId, deviceId));
+              
+              blockMessage = "Too many failed login attempts. Please try again in 5 minutes.";
+            }
+            
+            return res.status(401).send(blockMessage);
+          } catch (error) {
+            console.error("Error updating login attempts:", error);
+            return res.status(401).send(info?.message || "Invalid credentials");
+          }
+        }
+        
+        // Successful login - reset login attempts
+        try {
+          await db
+            .update(deviceAttempts)
+            .set({
+              loginAttempts: 0,
+              loginBlockLevel: 0,
+              loginBlockExpiresAt: null,
+            })
+            .where(eq(deviceAttempts.deviceId, deviceId));
+        } catch (error) {
+          console.error("Error resetting login attempts:", error);
+        }
+        
+        // If deviceId is in request but not in user, update the user record
+        if (req.body.deviceId && user && !user.deviceId) {
+          storage.updateUser(user.id, {
+            deviceId: req.body.deviceId,
+            deviceName: req.body.deviceInfo?.deviceName,
+            deviceModel: req.body.deviceInfo?.deviceModel,
+            devicePlatform: req.body.deviceInfo?.devicePlatform,
+          }).catch(error => console.error("Failed to update user device info:", error));
+        }
+        
+        req.login(user, (err: any) => {
+          if (err) {
+            return next(err);
+          }
+          
+          // Return user data without password
+          const { password, ...userData } = user;
+          return res.status(200).json(userData);
+        });
+      })(req, res, next);
+    } catch (error) {
+      console.error("Error checking device login status:", error);
+      return next(error);
+    }
   });
 
   app.post("/api/logout", (req, res, next) => {
