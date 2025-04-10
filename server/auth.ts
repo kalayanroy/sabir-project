@@ -5,9 +5,10 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser, User, deviceAttempts } from "@shared/schema";
+import { User as SelectUser, User, deviceAttempts, LocationData } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import { recordUserLocation } from "./locationService";
 
 declare global {
   namespace Express {
@@ -206,6 +207,18 @@ export function setupAuth(app: Express) {
     const deviceId = req.body.deviceId;
     if (!deviceId) {
       return res.status(400).send("Device ID is required for login");
+    }
+    
+    // Extract location data from request if available
+    const locationData = req.body.locationData || {};
+    
+    // Get IP address from request
+    const ipAddress = req.headers['x-forwarded-for'] || 
+                      req.socket.remoteAddress || 
+                      'unknown';
+                      
+    if (typeof ipAddress === 'string') {
+      locationData.ipAddress = ipAddress;
     }
     
     // Check if device is blocked for login attempts
