@@ -33,7 +33,7 @@ const loginSchema = z.object({
 
 // Extended schema for registration with validation
 const registerSchema = insertUserSchema.extend({
-  email: z.string().email("Please enter a valid email").min(1, "Email is required"),
+  // Keep email validation from insertUserSchema
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string().min(1, "Please confirm your password"),
   acceptTerms: z.boolean().refine(val => val === true, {

@@ -13,15 +13,22 @@ export const users = pgTable("users", {
   devicePlatform: text("devicePlatform"),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  email: true,
-  password: true,
-  deviceId: true,
-  deviceName: true,
-  deviceModel: true,
-  devicePlatform: true,
-});
+// Create base schema and add custom validation
+const baseInsertUserSchema = createInsertSchema(users);
+
+export const insertUserSchema = baseInsertUserSchema
+  .extend({
+    email: z.string().email("Please enter a valid email").min(1, "Email is required")
+  })
+  .pick({
+    username: true,
+    email: true,
+    password: true,
+    deviceId: true,
+    deviceName: true,
+    deviceModel: true,
+    devicePlatform: true,
+  });
 
 export const loginUserSchema = z.object({
   username: z.string().min(1, "Username is required"),
