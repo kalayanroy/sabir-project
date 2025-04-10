@@ -237,11 +237,6 @@ export default function AuthPage() {
                   </Alert>
                 )}
                 
-                {/* Debug information */}
-                <div className="mb-4 text-xs text-muted-foreground border border-border p-2 rounded">
-                  <div><strong>Debug:</strong> Login block info: {JSON.stringify(loginBlockInfo)}</div>
-                </div>
-                
                 {/* Regular login error (not a block) */}
                 {loginMutation.error && !loginBlockInfo?.isBlocked && (
                   <Alert variant="destructive" className="mb-4">

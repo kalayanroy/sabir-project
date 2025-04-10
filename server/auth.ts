@@ -310,7 +310,7 @@ export function setupAuth(app: Express) {
               blockMessage = "Too many failed login attempts. Please try again in 5 minutes.";
             }
             
-            return res.status(401).send(blockMessage);
+            return res.status(403).send(blockMessage);
           } catch (error) {
             console.error("Error updating login attempts:", error);
             return res.status(401).send(info?.message || "Invalid credentials");
