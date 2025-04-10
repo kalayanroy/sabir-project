@@ -20,7 +20,8 @@ export default function HomePage() {
   const { user, logoutMutation } = useAuth();
 
   const handleLogout = () => {
-    logoutMutation.mutate();
+    // The logoutMutation will automatically attempt to get the user's location
+    logoutMutation.mutate(undefined);
   };
 
   if (!user) return null;

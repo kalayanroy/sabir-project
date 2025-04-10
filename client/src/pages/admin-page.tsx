@@ -32,7 +32,22 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import { 
+  Loader2, 
+  Shield, 
+  CheckCircle, 
+  AlertCircle, 
+  Map, 
+  LogIn, 
+  LogOut,
+  MapPin 
+} from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 // Blocked device type from server
 type BlockedDevice = {

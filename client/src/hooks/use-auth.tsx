@@ -4,7 +4,7 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
+import { insertUserSchema, User as SelectUser, InsertUser, LocationData } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,6 +25,7 @@ type LoginData = {
     deviceModel?: string;
     devicePlatform?: string;
   };
+  locationData?: Partial<LocationData>;
 };
 
 type RegisterData = {
@@ -42,7 +43,7 @@ type AuthContextType = {
   isLoading: boolean;
   error: Error | null;
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
-  logoutMutation: UseMutationResult<void, Error, void>;
+  logoutMutation: UseMutationResult<void, Error, Partial<LocationData> | undefined>;
   registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
   loginBlockInfo: LoginBlockInfo | null;
 };
@@ -92,7 +93,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       try {
-        const res = await apiRequest("POST", "/api/login", credentials);
+        // Try to get geolocation if supported by the browser
+        let locationData = credentials.locationData || {};
+        
+        if (!locationData.latitude && !locationData.longitude && navigator.geolocation) {
+          try {
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+              });
+            });
+            
+            locationData = {
+              ...locationData,
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            };
+            console.log("Captured location for login:", locationData);
+          } catch (error) {
+            console.log("Failed to get location for login:", error);
+            // Continue without location data
+          }
+        }
+        
+        // Include the location data in the login request
+        const finalCredentials = {
+          ...credentials,
+          locationData
+        };
+        
+        const res = await apiRequest("POST", "/api/login", finalCredentials);
         return await res.json();
       } catch (err: any) {
         console.log("Login error:", err);
@@ -181,8 +213,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const logoutMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+    mutationFn: async (locationData?: Partial<LocationData>) => {
+      try {
+        // Get current location if available and permitted by the browser
+        let finalLocationData = locationData || {};
+        
+        // Try to get geolocation if not provided and browser supports it
+        if (!finalLocationData.latitude && !finalLocationData.longitude && navigator.geolocation) {
+          try {
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+              });
+            });
+            
+            finalLocationData = {
+              ...finalLocationData,
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            };
+            console.log("Captured location for logout:", finalLocationData);
+          } catch (error) {
+            console.log("Failed to get location for logout:", error);
+            // Continue without location data
+          }
+        }
+        
+        // Send the logout request with location data
+        await apiRequest("POST", "/api/logout", { locationData: finalLocationData });
+      } catch (error) {
+        console.error("Error during logout:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
