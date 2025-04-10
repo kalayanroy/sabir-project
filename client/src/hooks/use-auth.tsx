@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useState, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -8,13 +8,12 @@ import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-type AuthContextType = {
-  user: SelectUser | null;
-  isLoading: boolean;
-  error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
-  logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
+// Login block information type
+type LoginBlockInfo = {
+  isBlocked: boolean;
+  message: string;
+  expiresAt?: Date;
+  remainingMinutes?: number;
 };
 
 type LoginData = {
@@ -38,6 +37,16 @@ type RegisterData = {
   devicePlatform?: string;
 };
 
+type AuthContextType = {
+  user: SelectUser | null;
+  isLoading: boolean;
+  error: Error | null;
+  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  logoutMutation: UseMutationResult<void, Error, void>;
+  registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
+  loginBlockInfo: LoginBlockInfo | null;
+};
+
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -50,13 +59,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
+  
+  // State for login block information
+  const [loginBlockInfo, setLoginBlockInfo] = useState<LoginBlockInfo | null>(null);
+  
+  // Timer to update remaining time
+  useEffect(() => {
+    if (!loginBlockInfo?.expiresAt) return;
+    
+    // Update remaining time every minute
+    const intervalId = setInterval(() => {
+      const now = new Date();
+      const expiresAt = new Date(loginBlockInfo.expiresAt!);
+      
+      if (now >= expiresAt) {
+        // Block has expired
+        setLoginBlockInfo(null);
+        clearInterval(intervalId);
+      } else {
+        // Update remaining time
+        const remainingMinutes = Math.ceil((expiresAt.getTime() - now.getTime()) / (60 * 1000));
+        setLoginBlockInfo(prev => prev ? {
+          ...prev,
+          remainingMinutes
+        } : null);
+      }
+    }, 10000); // Update every 10 seconds
+    
+    return () => clearInterval(intervalId);
+  }, [loginBlockInfo?.expiresAt]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        return await res.json();
+      } catch (err: any) {
+        // Check if this is a login block error (403)
+        if (err.status === 403) {
+          const message = err.message || '';
+          
+          // Parse remaining time from error message if possible
+          const timeMatch = message.match(/try again in (\d+) minute/);
+          if (timeMatch) {
+            const remainingMinutes = parseInt(timeMatch[1], 10);
+            const expiresAt = new Date();
+            expiresAt.setMinutes(expiresAt.getMinutes() + remainingMinutes);
+            
+            setLoginBlockInfo({
+              isBlocked: true,
+              message,
+              expiresAt,
+              remainingMinutes
+            });
+          } else {
+            // Generic block without specific time
+            setLoginBlockInfo({
+              isBlocked: true,
+              message: message || 'Account temporarily locked'
+            });
+          }
+        }
+        
+        throw err;
+      }
     },
     onSuccess: (user: SelectUser) => {
+      // Reset login block info on successful login
+      setLoginBlockInfo(null);
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Login successful",
@@ -64,11 +134,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Only show toast if not a login block (that's handled separately)
+      if (!loginBlockInfo) {
+        toast({
+          title: "Login failed",
+          description: error.message || "Invalid username or password",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -123,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        loginBlockInfo,
       }}
     >
       {children}
