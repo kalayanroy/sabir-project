@@ -419,7 +419,19 @@ export default function AuthPage() {
               <div>
                 <h3 className="font-medium text-xl mb-1">Secure Authentication</h3>
                 <p className="text-white/80">
-                  Your data is protected with industry-standard encryption and secure password hashing.
+                  Your data is protected with industry-standard encryption and secure
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start">
+              <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center mr-4">
+                <Smartphone className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-medium text-xl mb-1">Device-Bound Security</h3>
+                <p className="text-white/80">
+                  For your security, your account is linked to this device. You can only login from the device you registered on.
                 </p>
               </div>
             </div>

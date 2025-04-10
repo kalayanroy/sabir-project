@@ -18,7 +18,7 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   currentId: number;
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
 
   constructor() {
     this.users = new Map();
@@ -46,7 +46,17 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId++;
-    const user: User = { ...insertUser, id };
+    
+    // Ensure all device fields are properly initialized as null if undefined
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      deviceId: insertUser.deviceId || null,
+      deviceName: insertUser.deviceName || null,
+      deviceModel: insertUser.deviceModel || null,
+      devicePlatform: insertUser.devicePlatform || null
+    };
+    
     this.users.set(id, user);
     return user;
   }

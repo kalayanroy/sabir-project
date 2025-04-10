@@ -11,7 +11,9 @@ import {
   Edit, 
   Lock, 
   LogIn,
-  ChevronRight
+  ChevronRight,
+  Smartphone,
+  Info
 } from "lucide-react";
 
 export default function HomePage() {
@@ -146,6 +148,52 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             </div>
+            
+            {/* Device Information */}
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                <div className="flex items-center mb-4">
+                  <Smartphone className="h-6 w-6 text-primary mr-2" />
+                  <h3 className="text-lg font-medium">Device Information</h3>
+                </div>
+                
+                <div className="rounded-lg bg-muted/50 p-4 mb-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Device ID</p>
+                      <p className="font-mono text-xs break-all bg-background p-2 rounded border">
+                        {user.deviceId || "Not registered to a specific device"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Device Name</p>
+                      <p className="font-medium">
+                        {user.deviceName || "Unknown Device"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Device Model</p>
+                      <p className="font-medium">
+                        {user.deviceModel || "Unknown Model"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Platform</p>
+                      <p className="font-medium">
+                        {user.devicePlatform || "Unknown Platform"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex items-center">
+                    <Info className="h-4 w-4 text-muted-foreground mr-2" />
+                    <p className="text-xs text-muted-foreground">
+                      For security reasons, your account is linked to this device. You can only login from this device.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             
             <Card className="mb-6">
               <CardContent className="pt-6">
