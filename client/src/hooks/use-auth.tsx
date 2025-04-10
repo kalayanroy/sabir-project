@@ -95,9 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await apiRequest("POST", "/api/login", credentials);
         return await res.json();
       } catch (err: any) {
+        console.log("Login error:", err);
+        
         // Check if this is a login block error (403)
         if (err.status === 403) {
-          const message = err.message || '';
+          const message = err.originalMessage || err.message || '';
+          console.log("Login block detected:", message);
           
           // Parse remaining time from error message if possible
           const timeMatch = message.match(/try again in (\d+) minute/);
@@ -105,6 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const remainingMinutes = parseInt(timeMatch[1], 10);
             const expiresAt = new Date();
             expiresAt.setMinutes(expiresAt.getMinutes() + remainingMinutes);
+            
+            console.log("Setting login block with timer:", remainingMinutes, "minutes");
             
             setLoginBlockInfo({
               isBlocked: true,
@@ -114,11 +119,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
           } else {
             // Generic block without specific time
+            console.log("Setting generic login block");
+            
             setLoginBlockInfo({
               isBlocked: true,
               message: message || 'Account temporarily locked'
             });
           }
+        } else if (err.status === 401) {
+          // Regular authentication failure
+          console.log("Regular auth failure");
+          
+          // Make sure we clear any existing block info
+          setLoginBlockInfo(null);
         }
         
         throw err;
