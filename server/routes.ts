@@ -27,13 +27,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all blocked devices (for admin)
   app.get("/api/admin/blocked-devices", async (req: Request, res: Response) => {
     try {
-      // Debug the user info
-      console.log("Admin access - User info:", req.user);
-      console.log("Is user authenticated:", req.isAuthenticated());
-      console.log("Username:", req.user?.username);
+      // Debug the user info with more details
+      console.log("============= ADMIN ACCESS DEBUG =============");
+      console.log("Full request user object:", JSON.stringify(req.user, null, 2));
+      console.log("Is authenticated:", req.isAuthenticated());
+      console.log("Username value:", req.user?.username);
+      console.log("Username type:", typeof req.user?.username);
+      console.log("Username comparison result:", req.user?.username === "admin");
+      console.log("Authentication check result:", !req.isAuthenticated() || req.user?.username !== "admin");
+      console.log("=============================================");
       
       // Check if user is admin
       if (!req.isAuthenticated() || req.user?.username !== "admin") {
+        console.log("Failed admin check - returning 403");
         return res.status(403).json({ message: "Unauthorized access" });
       }
       
