@@ -129,7 +129,11 @@ export async function recordUserLocation(
         ipAddress: locationData.ipAddress,
         deviceInfo: JSON.stringify({
           timestamp: new Date().toISOString(),
-          event: eventType
+          event: eventType,
+          deviceId: userInfo?.deviceId || 'Unknown',
+          deviceName: userInfo?.deviceName || 'Unknown',
+          deviceModel: userInfo?.deviceModel || 'Unknown',
+          devicePlatform: userInfo?.devicePlatform || 'Unknown'
         })
       });
       
@@ -157,6 +161,10 @@ export async function recordUserLocation(
       deviceInfo: JSON.stringify({
         timestamp: new Date().toISOString(),
         event: eventType,
+        deviceId: userInfo?.deviceId || 'Unknown',
+        deviceName: userInfo?.deviceName || 'Unknown',
+        deviceModel: userInfo?.deviceModel || 'Unknown',
+        devicePlatform: userInfo?.devicePlatform || 'Unknown',
         geoDetails: geoData.raw ? { 
           osmId: geoData.raw.osm_id,
           placeId: geoData.raw.place_id

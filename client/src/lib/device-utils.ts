@@ -35,12 +35,52 @@ export function generateDeviceId(): string {
  * Collects information about the current device
  */
 export function getDeviceInfo() {
+  const platform = getDevicePlatform();
   return {
     deviceId: generateDeviceId(),
-    deviceName: navigator.platform || 'unknown',
+    deviceName: getDeviceName(platform),
     deviceModel: getDeviceModel(),
-    devicePlatform: getDevicePlatform(),
+    devicePlatform: platform,
   };
+}
+
+/**
+ * Gets a more user-friendly device name
+ */
+function getDeviceName(platform: string): string {
+  // Try to generate a more user-friendly name based on platform and available info
+  const userAgent = navigator.userAgent;
+  
+  if (platform === 'iOS') {
+    if (userAgent.includes('iPhone')) return 'iPhone';
+    if (userAgent.includes('iPad')) return 'iPad';
+    if (userAgent.includes('iPod')) return 'iPod';
+    return 'iOS Device';
+  }
+  
+  if (platform === 'Android') {
+    const brandRegex = /;\s([^;]+)\sBuild\//i;
+    const brandMatch = userAgent.match(brandRegex);
+    if (brandMatch && brandMatch[1]) {
+      return `${brandMatch[1]} Android Device`;
+    }
+    return 'Android Device';
+  }
+  
+  if (platform === 'Windows') {
+    if (userAgent.includes('Windows Phone')) return 'Windows Phone';
+    return 'Windows Device';
+  }
+  
+  if (platform === 'macOS') {
+    return 'Mac';
+  }
+  
+  if (platform === 'Linux') {
+    return 'Linux Device';
+  }
+  
+  return navigator.platform || 'Unknown Device';
 }
 
 /**

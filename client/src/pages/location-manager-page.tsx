@@ -304,8 +304,38 @@ export default function LocationManagerPage() {
                       <TableCell className="hidden lg:table-cell">
                         <code className="text-xs">{location.ipAddress || "N/A"}</code>
                       </TableCell>
-                      <TableCell className="hidden xl:table-cell max-w-[200px] truncate">
-                        {location.deviceInfo || "N/A"}
+                      <TableCell className="hidden xl:table-cell max-w-[200px]">
+                        {location.deviceInfo ? (
+                          <div className="text-xs space-y-1">
+                            {(() => {
+                              try {
+                                const deviceData = JSON.parse(location.deviceInfo);
+                                return (
+                                  <>
+                                    {deviceData.deviceModel && (
+                                      <div><span className="font-medium">Model:</span> {deviceData.deviceModel}</div>
+                                    )}
+                                    {deviceData.deviceName && (
+                                      <div><span className="font-medium">Name:</span> {deviceData.deviceName}</div>
+                                    )}
+                                    {deviceData.devicePlatform && (
+                                      <div><span className="font-medium">Platform:</span> {deviceData.devicePlatform}</div>
+                                    )}
+                                    {deviceData.deviceId && (
+                                      <div className="text-muted-foreground overflow-hidden text-ellipsis">
+                                        <span className="font-medium">ID:</span> {deviceData.deviceId}
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              } catch (e) {
+                                return <span className="text-muted-foreground">{location.deviceInfo}</span>;
+                              }
+                            })()}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
