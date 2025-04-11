@@ -125,7 +125,7 @@ export default function HomePage() {
                   </a>
                 </Button>
               </li>
-              {user.username === "admin1" && (
+              {(user.username === "admin1" || user.username === "admin") && (
                 <>
                   <li>
                     <Button 
@@ -224,7 +224,7 @@ export default function HomePage() {
                     </a>
                   </Button>
                 </li>
-                {user.username === "admin1" && (
+                {(user.username === "admin1" || user.username === "admin") && (
                   <>
                     <li>
                       <Button variant="ghost" className="w-full justify-start font-normal" asChild>
