@@ -180,12 +180,59 @@ export async function recordUserLocation(
 }
 
 /**
- * Get location history for a specific user
+ * Get location history for a specific user with enhanced data
  */
 export async function getUserLocationHistory(userId: number) {
-  return await db.query.userLocationHistory.findMany({
+  // Get raw records from the database
+  const records = await db.query.userLocationHistory.findMany({
     where: eq(userLocationHistory.userId, userId),
     orderBy: (ulh, { desc }) => [desc(ulh.timestamp)]
+  });
+  
+  // Process records to ensure proper formatting and data enrichment
+  return records.map(record => {
+    // Parse device info if present
+    let deviceInfoObj: any = {};
+    try {
+      if (record.deviceInfo) {
+        deviceInfoObj = JSON.parse(record.deviceInfo as string);
+      }
+    } catch (e) {
+      console.error('Error parsing device info:', e);
+    }
+    
+    // Ensure addressInfo is properly formatted
+    const addressInfo: any = record.addressInfo || {};
+    
+    // Get formatted location string
+    let locationStr = 'Unknown';
+    if (addressInfo) {
+      const parts: string[] = [];
+      if (addressInfo.city) parts.push(addressInfo.city);
+      if (addressInfo.state) parts.push(addressInfo.state);
+      if (addressInfo.country) parts.push(addressInfo.country);
+      
+      if (parts.length > 0) {
+        locationStr = parts.join(', ');
+      } else if (addressInfo.formatted) {
+        locationStr = addressInfo.formatted;
+      }
+    }
+    
+    // Return enhanced record with better formatted data
+    return {
+      ...record,
+      // Convert timestamps to ISO string if they're not already
+      timestamp: record.timestamp instanceof Date 
+        ? record.timestamp.toISOString() 
+        : record.timestamp,
+      // Enhance location description
+      formattedLocation: locationStr,
+      // Extract device name for easier display
+      deviceName: deviceInfoObj.deviceName || 'Unknown Device',
+      // Make sure IP is always available
+      ipAddress: record.ipAddress || 'Unknown IP'
+    };
   });
 }
 
@@ -193,7 +240,54 @@ export async function getUserLocationHistory(userId: number) {
  * Get all users' location history (admin only)
  */
 export async function getAllUsersLocationHistory() {
-  return await db.query.userLocationHistory.findMany({
+  // Get raw records from the database
+  const records = await db.query.userLocationHistory.findMany({
     orderBy: (ulh, { desc }) => [desc(ulh.timestamp)]
+  });
+  
+  // Process records for consistency - same enhancement as getUserLocationHistory
+  return records.map(record => {
+    // Parse device info if present
+    let deviceInfoObj: any = {};
+    try {
+      if (record.deviceInfo) {
+        deviceInfoObj = JSON.parse(record.deviceInfo as string);
+      }
+    } catch (e) {
+      console.error('Error parsing device info:', e);
+    }
+    
+    // Ensure addressInfo is properly formatted
+    const addressInfo: any = record.addressInfo || {};
+    
+    // Get formatted location string
+    let locationStr = 'Unknown';
+    if (addressInfo) {
+      const parts: string[] = [];
+      if (addressInfo.city) parts.push(addressInfo.city);
+      if (addressInfo.state) parts.push(addressInfo.state);
+      if (addressInfo.country) parts.push(addressInfo.country);
+      
+      if (parts.length > 0) {
+        locationStr = parts.join(', ');
+      } else if (addressInfo.formatted) {
+        locationStr = addressInfo.formatted;
+      }
+    }
+    
+    // Return enhanced record with better formatted data
+    return {
+      ...record,
+      // Convert timestamps to ISO string if they're not already
+      timestamp: record.timestamp instanceof Date 
+        ? record.timestamp.toISOString() 
+        : record.timestamp,
+      // Enhance location description
+      formattedLocation: locationStr,
+      // Extract device name for easier display
+      deviceName: deviceInfoObj.deviceName || 'Unknown Device',
+      // Make sure IP is always available
+      ipAddress: record.ipAddress || 'Unknown IP'
+    };
   });
 }

@@ -95,29 +95,14 @@ export default function SecuritySettingsPage() {
         const locationData = await response.json();
         
         // Transform the data to match our UI format
+        // The backend now returns enhanced records with formatted data
         const formattedHistory = locationData.map((entry: any) => {
-          // Format address information
-          let locationStr = "Unknown";
-          if (entry.addressInfo) {
-            const addr = entry.addressInfo;
-            const parts = [];
-            if (addr.city) parts.push(addr.city);
-            if (addr.state) parts.push(addr.state);
-            if (addr.country) parts.push(addr.country);
-            if (parts.length > 0) {
-              locationStr = parts.join(", ");
-            } else if (addr.formatted) {
-              locationStr = addr.formatted;
-            }
-          } else if (entry.latitude && entry.longitude) {
-            locationStr = `${entry.latitude.toFixed(4)}, ${entry.longitude.toFixed(4)}`;
-          }
-          
           return {
             date: entry.timestamp,
             ipAddress: entry.ipAddress || "Unknown",
-            location: locationStr,
-            device: entry.deviceInfo || user.deviceName || "Unknown Device",
+            location: entry.formattedLocation || "Unknown",
+            device: entry.deviceName || entry.deviceInfo || "Unknown Device",
+            eventType: entry.eventType || "unknown",
             success: true // Assuming all records are successful logins/logouts
           };
         });
