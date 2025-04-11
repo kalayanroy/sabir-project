@@ -24,6 +24,9 @@ import { Link } from "wouter";
 export default function HelpPage() {
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Determine if the user is an admin
+  const isAdmin = user && (user.username === "admin" || user.username === "admin1");
 
   if (!user) return null;
 
@@ -231,7 +234,7 @@ export default function HelpPage() {
             </Card>
             
             {/* Admin Section - Only visible to admin users */}
-            {(user.username === "admin1" || user.username === "admin") && (
+            {isAdmin && (
               <Card className="mb-6 border border-blue-200">
                 <CardHeader>
                   <CardTitle className="text-2xl flex items-center">
