@@ -17,6 +17,10 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Get active tab from URL query parameter
+  const [location] = window.location.search.match(/tab=([^&]*)/) || [];
+  const defaultTab = location ? location.split('=')[1] : 'basic-info';
 
   // Basic info state
   const [username, setUsername] = useState(user?.username || "");
@@ -168,7 +172,7 @@ export default function ProfilePage() {
 
       <div className="flex-1 p-4 md:p-6">
         <div className="container mx-auto max-w-3xl">
-          <Tabs defaultValue="basic-info" className="w-full">
+          <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="basic-info">Basic Information</TabsTrigger>
               <TabsTrigger value="password">Password</TabsTrigger>
