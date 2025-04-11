@@ -9,6 +9,7 @@ import AdminPage from "@/pages/admin-page";
 import LocationManagerPage from "@/pages/location-manager-page";
 import ProfilePage from "@/pages/profile-page";
 import SecuritySettingsPage from "@/pages/security-settings-page";
+import HelpPage from "@/pages/help-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 
@@ -20,6 +21,7 @@ function Router() {
       <ProtectedRoute path="/location-manager" component={LocationManagerPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/security" component={SecuritySettingsPage} />
+      <ProtectedRoute path="/help" component={HelpPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

@@ -188,7 +188,7 @@ export default function HomePage() {
                   asChild
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <a href="#" className="flex items-center">
+                  <a href="/help" className="flex items-center">
                     <HelpCircle className="mr-3 h-5 w-5 text-muted-foreground" />
                     Help
                   </a>
@@ -262,7 +262,7 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Button variant="ghost" className="w-full justify-start font-normal" asChild>
-                    <a href="#" className="flex items-center">
+                    <a href="/help" className="flex items-center">
                       <HelpCircle className="mr-3 h-5 w-5 text-muted-foreground" />
                       Help
                     </a>
