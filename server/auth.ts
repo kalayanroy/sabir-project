@@ -77,8 +77,12 @@ export function setupAuth(app: Express) {
           if (user.deviceId) {
             const deviceId = req.body.deviceId;
             
-            // If the user has a registered device, verify it matches
-            if (user.deviceId !== deviceId) {
+            // Allow admin users to bypass device binding - they can log in from any device
+            if (user.username === "admin") {
+              console.log("Admin user login - bypassing device binding check");
+            }
+            // For regular users, verify device ID matches
+            else if (user.deviceId !== deviceId) {
               return done(null, false, { 
                 message: "Authentication failed: This account is registered to another device." 
               });
@@ -123,7 +127,7 @@ export function setupAuth(app: Express) {
         console.error(`User username: "${user.username}"`);
         console.error(`Username length: ${user.username.length}`);
         console.error(`Is admin? ${user.username === "admin"}`);
-        console.error(`Username char codes: [${[...user.username].map(c => c.charCodeAt(0))}]`);
+        console.error(`Username char codes: [${Array.from(user.username).map(c => c.charCodeAt(0))}]`);
       }
       
       done(null, user);
@@ -242,33 +246,45 @@ export function setupAuth(app: Express) {
     
     // Check if device is blocked for login attempts
     try {
-      let deviceAttempt = await storage.getDeviceAttempt(deviceId);
+      // First check if this is an admin login attempt (special handling)
+      const adminUser = await storage.getUserByUsername("admin");
+      const isAdminLoginAttempt = req.body.username === "admin" || 
+                                 (adminUser && req.body.username === adminUser.email);
       
-      // If no device record exists yet, create one
-      if (!deviceAttempt) {
-        deviceAttempt = await storage.incrementDeviceAttempt(deviceId);
-        deviceAttempt.loginAttempts = 0;
-      }
+      // Initialize deviceAttemptObj for use in the following code
+      let deviceAttemptObj: DeviceAttempt | undefined;
       
-      // Check if device is permanently blocked
-      if (deviceAttempt.isBlocked) {
-        return res.status(403).send(
-          "This device has been blocked. Please submit an unblock request to the administrator."
-        );
-      }
-      
-      // Check if there's a temporary login block in effect
-      if (deviceAttempt.loginBlockExpiresAt) {
-        const now = new Date();
-        const blockExpiry = new Date(deviceAttempt.loginBlockExpiresAt);
+      if (isAdminLoginAttempt) {
+        console.log("Admin login attempt detected - bypassing device blocking");
+      } else {
+        deviceAttemptObj = await storage.getDeviceAttempt(deviceId);
         
-        if (now < blockExpiry) {
-          // Still blocked
-          const remainingMinutes = Math.ceil((blockExpiry.getTime() - now.getTime()) / (60 * 1000));
-          
+        // If no device record exists yet, create one
+        if (!deviceAttemptObj) {
+          deviceAttemptObj = await storage.incrementDeviceAttempt(deviceId);
+          deviceAttemptObj.loginAttempts = 0;
+        }
+        
+        // Check if device is permanently blocked
+        if (deviceAttemptObj.isBlocked) {
           return res.status(403).send(
-            `Too many failed login attempts. Please try again in ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`
+            "This device has been blocked. Please submit an unblock request to the administrator."
           );
+        }
+        
+        // Check if there's a temporary login block in effect
+        if (deviceAttemptObj.loginBlockExpiresAt) {
+          const now = new Date();
+          const blockExpiry = new Date(deviceAttemptObj.loginBlockExpiresAt);
+          
+          if (now < blockExpiry) {
+            // Still blocked
+            const remainingMinutes = Math.ceil((blockExpiry.getTime() - now.getTime()) / (60 * 1000));
+            
+            return res.status(403).send(
+              `Too many failed login attempts. Please try again in ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`
+            );
+          }
         }
       }
       
@@ -282,7 +298,8 @@ export function setupAuth(app: Express) {
           // Failed login attempt - update counter and possibly block
           try {
             // Increment login attempts
-            const currentAttempts = deviceAttempt.loginAttempts || 0;
+            const deviceAttemptForUpdate = await storage.getDeviceAttempt(deviceId);
+            const currentAttempts = deviceAttemptForUpdate?.loginAttempts || 0;
             const updatedAttempt = await db
               .update(deviceAttempts)
               .set({
