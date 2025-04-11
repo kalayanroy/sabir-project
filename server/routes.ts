@@ -12,7 +12,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/location-history", async (req: Request, res: Response) => {
     try {
       // Check if user is admin
-      if (!req.isAuthenticated() || req.user?.username !== "admin1") {
+      if (!req.isAuthenticated() || req.user?.username !== "admin") {
         return res.status(403).json({ message: "Unauthorized access" });
       }
 
@@ -28,7 +28,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/blocked-devices", async (req: Request, res: Response) => {
     try {
       // Check if user is admin
-      if (!req.isAuthenticated() || req.user?.username !== "admin1") {
+      if (!req.isAuthenticated() || req.user?.username !== "admin") {
         return res.status(403).json({ message: "Unauthorized access" });
       }
       
@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/unblock-device", async (req: Request, res: Response) => {
     try {
       // Check if user is admin
-      if (!req.isAuthenticated() || req.user?.username !== "admin1") {
+      if (!req.isAuthenticated() || req.user?.username !== "admin") {
         return res.status(403).json({ message: "Unauthorized access" });
       }
       
@@ -70,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/reject-unblock-request", async (req: Request, res: Response) => {
     try {
       // Check if user is admin
-      if (!req.isAuthenticated() || req.user?.username !== "admin1") {
+      if (!req.isAuthenticated() || req.user?.username !== "admin") {
         return res.status(403).json({ message: "Unauthorized access" });
       }
       
