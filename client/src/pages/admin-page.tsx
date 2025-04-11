@@ -88,6 +88,11 @@ export default function AdminPage() {
   const [selectedDevice, setSelectedDevice] = useState<BlockedDevice | null>(null);
   const [requestDetailsOpen, setRequestDetailsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("devices");
+  
+  // Set page title
+  useEffect(() => {
+    document.title = "Device Manager | SecureLogin";
+  }, []);
 
   // Only admin can access this page
   if (!user || user.username !== "admin1") {
@@ -253,7 +258,7 @@ export default function AdminPage() {
       <div className="min-h-screen p-6">
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-2xl">Admin Dashboard</CardTitle>
+            <CardTitle className="text-2xl">Device Manager</CardTitle>
             <CardDescription>Error loading data</CardDescription>
           </CardHeader>
           <CardContent>
@@ -277,7 +282,7 @@ export default function AdminPage() {
           <div>
             <CardTitle className="text-2xl flex items-center gap-2">
               <Shield className="h-6 w-6 text-primary" />
-              Admin Dashboard
+              Device Manager
             </CardTitle>
             <CardDescription>Security management and monitoring tools</CardDescription>
           </div>

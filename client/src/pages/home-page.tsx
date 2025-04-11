@@ -83,7 +83,7 @@ export default function HomePage() {
                     <Button variant="ghost" className="w-full justify-start font-normal" asChild>
                       <a href="/admin" className="flex items-center">
                         <Shield className="mr-3 h-5 w-5 text-red-500" />
-                        Admin Panel
+                        Device Manager
                       </a>
                     </Button>
                   </li>
@@ -229,7 +229,7 @@ export default function HomePage() {
                       >
                         <a href="/admin" className="flex items-center">
                           <Shield className="mr-2 h-4 w-4" />
-                          Go to Admin Dashboard
+                          Go to Device Manager
                         </a>
                       </Button>
                     </div>
