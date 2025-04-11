@@ -13,7 +13,8 @@ import {
   LogIn,
   ChevronRight,
   Smartphone,
-  Info
+  Info,
+  Map as MapIcon
 } from "lucide-react";
 
 export default function HomePage() {
@@ -79,14 +80,24 @@ export default function HomePage() {
                   </Button>
                 </li>
                 {user.username === "admin1" && (
-                  <li>
-                    <Button variant="ghost" className="w-full justify-start font-normal" asChild>
-                      <a href="/admin" className="flex items-center">
-                        <Shield className="mr-3 h-5 w-5 text-red-500" />
-                        Device Manager
-                      </a>
-                    </Button>
-                  </li>
+                  <>
+                    <li>
+                      <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                        <a href="/admin" className="flex items-center">
+                          <Shield className="mr-3 h-5 w-5 text-red-500" />
+                          Device Manager
+                        </a>
+                      </Button>
+                    </li>
+                    <li>
+                      <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                        <a href="/location-manager" className="flex items-center">
+                          <MapIcon className="mr-3 h-5 w-5 text-blue-500" />
+                          Location Manager
+                        </a>
+                      </Button>
+                    </li>
+                  </>
                 )}
                 <li>
                   <Button variant="ghost" className="w-full justify-start font-normal" asChild>
@@ -233,11 +244,29 @@ export default function HomePage() {
                         </a>
                       </Button>
                     </div>
+
+                    <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
+                      <h4 className="font-medium mb-2 text-blue-800">Location Tracking Management</h4>
+                      <p className="text-sm text-blue-700 mb-4">
+                        View and analyze user login/logout location data, including geographic coordinates 
+                        and address information for enhanced security monitoring.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50"
+                        asChild
+                      >
+                        <a href="/location-manager" className="flex items-center">
+                          <Map className="mr-2 h-4 w-4" />
+                          Go to Location Manager
+                        </a>
+                      </Button>
+                    </div>
                     
                     <div className="rounded-md bg-amber-50 p-4 border border-amber-100">
                       <h4 className="font-medium mb-2 text-amber-800">Security Notice</h4>
                       <p className="text-sm text-amber-700">
-                        Remember that only administrators should have access to the device management console. 
+                        Remember that only administrators should have access to the management consoles. 
                         Do not share your admin credentials with others.
                       </p>
                     </div>
