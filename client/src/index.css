@@ -2,6 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --theme-primary: hsl(265, 100%, 46%);
+}
+
+@layer base {
+  :root[data-theme-variant="professional"] {
+    --primary: var(--theme-primary);
+    --primary-foreground: white;
+  }
+  
+  :root[data-theme-variant="tint"] {
+    --primary: color-mix(in srgb, var(--theme-primary) 15%, white);
+    --primary-foreground: var(--theme-primary);
+  }
+  
+  :root[data-theme-variant="vibrant"] {
+    --primary: var(--theme-primary);
+    --primary-foreground: white;
+    --ring: var(--theme-primary);
+  }
+  
+  /* Apply border radius to all component borders */
+  * {
+    border-radius: calc(var(--radius) * 1px);
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
