@@ -27,6 +27,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all blocked devices (for admin)
   app.get("/api/admin/blocked-devices", async (req: Request, res: Response) => {
     try {
+      // Debug the user info
+      console.log("Admin access - User info:", req.user);
+      console.log("Is user authenticated:", req.isAuthenticated());
+      console.log("Username:", req.user?.username);
+      
       // Check if user is admin
       if (!req.isAuthenticated() || req.user?.username !== "admin") {
         return res.status(403).json({ message: "Unauthorized access" });
@@ -187,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Security check - regular users can only view their own history
       // Admin users can view any user's history
-      if (req.user.id !== userId && req.user.username !== "admin1") {
+      if (req.user.id !== userId && req.user.username !== "admin") {
         return res.status(403).json({ message: "Forbidden: You can only view your own login history" });
       }
       
