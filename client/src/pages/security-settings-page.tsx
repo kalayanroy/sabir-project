@@ -36,13 +36,11 @@ import {
   AlertTriangle,
   Info,
   History,
-  XCircle,
-  Palette
+  XCircle
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
-import ThemeSelector from "@/components/theme-selector";
 
 export default function SecuritySettingsPage() {
   const { user } = useAuth();
@@ -516,10 +514,6 @@ export default function SecuritySettingsPage() {
                   </CardFooter>
                 </form>
               </Card>
-            </TabsContent>
-            
-            <TabsContent value="themes">
-              <ThemeSelector />
             </TabsContent>
 
             <TabsContent value="activity">
