@@ -9,6 +9,7 @@ import { User as SelectUser, User, deviceAttempts, LocationData } from "@shared/
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { recordUserLocation, getUserLocationHistory, getAllUsersLocationHistory } from "./locationService";
+import { deviceAttemptActions } from "./deviceAttemptActions";
 
 declare global {
   namespace Express {
@@ -546,7 +547,7 @@ export function setupAuth(app: Express) {
     }
     
     try {
-      const { deviceAttemptActions } = require("./deviceAttemptActions");
+      // Use imported deviceAttemptActions
       const requests = await deviceAttemptActions.getUnblockRequests();
       return res.json(requests);
     } catch (error) {
@@ -598,7 +599,7 @@ export function setupAuth(app: Express) {
     }
     
     try {
-      const { deviceAttemptActions } = require("./deviceAttemptActions");
+      // Use imported deviceAttemptActions
       const updated = await deviceAttemptActions.rejectUnblockRequest(deviceId, reason);
       
       if (!updated) {
