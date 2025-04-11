@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useState } from "react";
 import { 
   LogOut, 
   User, 
@@ -13,17 +14,24 @@ import {
   LogIn,
   ChevronRight,
   Smartphone,
-  Info
+  Info,
+  Menu,
+  X
 } from "lucide-react";
 // Import Map icon separately to avoid conflict with built-in Map object
 import { Map as MapIcon } from "lucide-react";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   const handleLogout = () => {
     // The logoutMutation will automatically attempt to get the user's location
     logoutMutation.mutate(undefined);
+  };
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
   };
 
   if (!user) return null;
@@ -34,6 +42,14 @@ export default function HomePage() {
       <header className="bg-primary text-white shadow-md">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden text-white mr-2 hover:bg-white/20"
+              onClick={toggleMobileMenu}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
             <Lock className="h-6 w-6 mr-2" />
             <h1 className="text-xl font-medium">SecureLogin</h1>
           </div>
@@ -49,15 +65,143 @@ export default function HomePage() {
               disabled={logoutMutation.isPending}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </div>
       </header>
       
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+      
+      {/* Mobile Sidebar */}
+      <div 
+        className={`fixed top-0 left-0 h-full w-64 bg-card shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex justify-between items-center p-4 border-b">
+          <div className="flex items-center">
+            <Lock className="h-5 w-5 mr-2 text-primary" />
+            <h2 className="font-medium">SecureLogin</h2>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <div className="p-4">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+              <User className="h-5 w-5" />
+            </div>
+            <div className="ml-3">
+              <p className="font-medium">{user.username}</p>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
+            </div>
+          </div>
+          
+          <nav>
+            <ul className="space-y-1">
+              <li>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start font-normal" 
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <a href="#" className="flex items-center">
+                    <User className="mr-3 h-5 w-5 text-primary" />
+                    Dashboard
+                  </a>
+                </Button>
+              </li>
+              {user.username === "admin1" && (
+                <>
+                  <li>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start font-normal" 
+                      asChild
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <a href="/admin" className="flex items-center">
+                        <Shield className="mr-3 h-5 w-5 text-red-500" />
+                        Device Manager
+                      </a>
+                    </Button>
+                  </li>
+                  <li>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start font-normal" 
+                      asChild
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <a href="/location-manager" className="flex items-center">
+                        <MapIcon className="mr-3 h-5 w-5 text-blue-500" />
+                        Location Manager
+                      </a>
+                    </Button>
+                  </li>
+                </>
+              )}
+              <li>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start font-normal" 
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <a href="#" className="flex items-center">
+                    <Edit className="mr-3 h-5 w-5 text-muted-foreground" />
+                    Profile
+                  </a>
+                </Button>
+              </li>
+              <li>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start font-normal" 
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <a href="#" className="flex items-center">
+                    <Settings className="mr-3 h-5 w-5 text-muted-foreground" />
+                    Settings
+                  </a>
+                </Button>
+              </li>
+              <li>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start font-normal" 
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <a href="#" className="flex items-center">
+                    <HelpCircle className="mr-3 h-5 w-5 text-muted-foreground" />
+                    Help
+                  </a>
+                </Button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+      
       {/* Main Content */}
       <div className="flex flex-1">
-        {/* Sidebar */}
+        {/* Desktop Sidebar */}
         <div className="hidden md:block w-64 bg-card shadow-md">
           <div className="p-4">
             <div className="flex items-center mb-6">
