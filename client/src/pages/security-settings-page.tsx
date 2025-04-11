@@ -34,7 +34,9 @@ import {
   Eye,
   EyeOff,
   AlertTriangle,
-  Info
+  Info,
+  History,
+  XCircle
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -250,7 +252,7 @@ export default function SecuritySettingsPage() {
               </TabsTrigger>
               <TabsTrigger value="activity" className="flex-1">
                 <span className="flex items-center gap-1 md:hidden">
-                  <Activity className="h-3.5 w-3.5" />
+                  <History className="h-3.5 w-3.5" />
                   <span>Activity</span>
                 </span>
                 <span className="hidden md:block">Login Activity</span>
