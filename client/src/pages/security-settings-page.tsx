@@ -233,10 +233,10 @@ export default function SecuritySettingsPage() {
       <div className="flex-1 p-4 md:p-6">
         <div className="container mx-auto max-w-3xl">
           <Tabs defaultValue={defaultTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="password">Password</TabsTrigger>
-              <TabsTrigger value="preferences">Security Preferences</TabsTrigger>
-              <TabsTrigger value="activity">Login Activity</TabsTrigger>
+            <TabsList className="w-full mb-6 flex flex-wrap gap-2 md:grid md:grid-cols-3">
+              <TabsTrigger value="password" className="flex-1">Password</TabsTrigger>
+              <TabsTrigger value="preferences" className="flex-1">Security Preferences</TabsTrigger>
+              <TabsTrigger value="activity" className="flex-1">Login Activity</TabsTrigger>
             </TabsList>
 
             <TabsContent value="password">
@@ -527,59 +527,114 @@ export default function SecuritySettingsPage() {
                       </div>
                     )}
                     
-                    {/* Data table */}
+                    {/* Data display - responsive design */}
                     {!isLoadingHistory && !historyError && (
-                      <div className="rounded-lg border overflow-hidden">
-                        <table className="w-full text-sm">
-                          <thead className="bg-muted">
-                            <tr>
-                              <th className="px-4 py-3 text-left font-medium">Date & Time</th>
-                              <th className="px-4 py-3 text-left font-medium hidden md:table-cell">IP Address</th>
-                              <th className="px-4 py-3 text-left font-medium">Location</th>
-                              <th className="px-4 py-3 text-left font-medium hidden md:table-cell">Device</th>
-                              <th className="px-4 py-3 text-left font-medium">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y">
-                            {loginHistory.map((entry, index) => (
-                              <tr key={index} className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}>
-                                <td className="px-4 py-3">
-                                  {new Date(entry.date).toLocaleString()}
-                                </td>
-                                <td className="px-4 py-3 hidden md:table-cell font-mono text-xs">
-                                  {entry.ipAddress}
-                                </td>
-                                <td className="px-4 py-3">
-                                  {entry.location}
-                                </td>
-                                <td className="px-4 py-3 hidden md:table-cell">
-                                  {entry.device}
-                                </td>
-                                <td className="px-4 py-3">
-                                  {entry.success ? (
-                                    <span className="inline-flex items-center text-green-700 bg-green-50 px-2 py-1 rounded-full text-xs">
-                                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                                      Success
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center text-red-700 bg-red-50 px-2 py-1 rounded-full text-xs">
-                                      <AlertCircle className="h-3 w-3 mr-1" />
-                                      Failed
-                                    </span>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                            {loginHistory.length === 0 && !isLoadingHistory && (
+                      <>
+                        {/* Mobile card layout for small screens */}
+                        <div className="md:hidden space-y-4">
+                          {loginHistory.length === 0 ? (
+                            <div className="p-4 text-center text-muted-foreground border rounded-lg">
+                              No login activity to display
+                            </div>
+                          ) : (
+                            loginHistory.map((entry, index) => (
+                              <div key={index} className="p-4 rounded-lg border bg-card">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div>
+                                    <div className="font-medium">
+                                      {new Date(entry.date).toLocaleDateString()} 
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {new Date(entry.date).toLocaleTimeString()}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    {entry.success ? (
+                                      <span className="inline-flex items-center text-green-700 bg-green-50 px-2 py-1 rounded-full text-xs">
+                                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                                        Success
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center text-red-700 bg-red-50 px-2 py-1 rounded-full text-xs">
+                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                        Failed
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 gap-2 text-sm">
+                                  <div className="flex p-2 bg-muted/30 rounded">
+                                    <div className="text-muted-foreground text-xs w-24">Location:</div>
+                                    <div className="flex-1">{entry.location}</div>
+                                  </div>
+                                  <div className="flex p-2 bg-muted/30 rounded">
+                                    <div className="text-muted-foreground text-xs w-24">IP Address:</div>
+                                    <div className="flex-1 font-mono text-xs">{entry.ipAddress}</div>
+                                  </div>
+                                  <div className="flex p-2 bg-muted/30 rounded">
+                                    <div className="text-muted-foreground text-xs w-24">Device:</div>
+                                    <div className="flex-1">{entry.device || 'Unknown Device'}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        
+                        {/* Desktop table layout */}
+                        <div className="rounded-lg border overflow-hidden hidden md:block">
+                          <table className="w-full text-sm">
+                            <thead className="bg-muted">
                               <tr>
-                                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                                  No login activity to display
-                                </td>
+                                <th className="px-4 py-3 text-left font-medium">Date & Time</th>
+                                <th className="px-4 py-3 text-left font-medium">IP Address</th>
+                                <th className="px-4 py-3 text-left font-medium">Location</th>
+                                <th className="px-4 py-3 text-left font-medium">Device</th>
+                                <th className="px-4 py-3 text-left font-medium">Status</th>
                               </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody className="divide-y">
+                              {loginHistory.map((entry, index) => (
+                                <tr key={index} className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}>
+                                  <td className="px-4 py-3">
+                                    {new Date(entry.date).toLocaleString()}
+                                  </td>
+                                  <td className="px-4 py-3 font-mono text-xs">
+                                    {entry.ipAddress}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {entry.location}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {entry.device || 'Unknown Device'}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {entry.success ? (
+                                      <span className="inline-flex items-center text-green-700 bg-green-50 px-2 py-1 rounded-full text-xs">
+                                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                                        Success
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center text-red-700 bg-red-50 px-2 py-1 rounded-full text-xs">
+                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                        Failed
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                              {loginHistory.length === 0 && (
+                                <tr>
+                                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                    No login activity to display
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
                     )}
                     
                     {/* Pagination (disabled for now) */}
