@@ -367,7 +367,7 @@ export default function HomePage() {
             </Card>
             
             {/* Admin Section - Only visible to admin users */}
-            {user.username === "admin1" && (
+            {(user.username === "admin1" || user.username === "admin") && (
               <Card className="mb-6 border border-red-200">
                 <CardContent className="pt-6">
                   <div className="flex items-center mb-4">
