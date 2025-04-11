@@ -147,6 +147,19 @@ export default function HomePage() {
                       asChild
                       onClick={() => setMobileMenuOpen(false)}
                     >
+                      <a href="/user-admin" className="flex items-center">
+                        <User className="mr-3 h-5 w-5 text-green-600" />
+                        User Management
+                      </a>
+                    </Button>
+                  </li>
+                  <li>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start font-normal" 
+                      asChild
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
                       <a href="/location-manager" className="flex items-center">
                         <MapIcon className="mr-3 h-5 w-5 text-blue-500" />
                         Location Manager
@@ -231,6 +244,14 @@ export default function HomePage() {
                         <a href="/admin" className="flex items-center">
                           <Shield className="mr-3 h-5 w-5 text-red-500" />
                           Device Manager
+                        </a>
+                      </Button>
+                    </li>
+                    <li>
+                      <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                        <a href="/user-admin" className="flex items-center">
+                          <User className="mr-3 h-5 w-5 text-green-600" />
+                          User Management
                         </a>
                       </Button>
                     </li>
@@ -390,6 +411,24 @@ export default function HomePage() {
                         <a href="/admin" className="flex items-center">
                           <Shield className="mr-2 h-4 w-4" />
                           Go to Device Manager
+                        </a>
+                      </Button>
+                    </div>
+                    
+                    <div className="bg-green-50 p-4 rounded-md border border-green-100">
+                      <h4 className="font-medium mb-2 text-green-800">User Role Management</h4>
+                      <p className="text-sm text-green-700 mb-4">
+                        Manage user roles and permissions. Assign admin privileges to trusted users
+                        who need to access administrative features.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="bg-white border-green-200 text-green-700 hover:bg-green-50"
+                        asChild
+                      >
+                        <a href="/user-admin" className="flex items-center">
+                          <User className="mr-2 h-4 w-4" />
+                          Go to User Management
                         </a>
                       </Button>
                     </div>
