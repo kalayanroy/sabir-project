@@ -199,20 +199,12 @@ export default function LocationManagerPage() {
             </div>
             <div className="flex gap-2">
               <Button
-                variant={filterType === 'login' ? "default" : "outline"}
+                variant={filterType !== 'all' ? "default" : "outline"}
                 className="gap-1"
-                onClick={() => setFilterType(filterType === 'login' ? 'all' : 'login')}
+                onClick={() => setFilterType(filterType === 'all' ? 'login' : filterType === 'login' ? 'logout' : 'all')}
               >
-                <LogIn className="h-4 w-4" />
-                Login
-              </Button>
-              <Button
-                variant={filterType === 'logout' ? "default" : "outline"}
-                className="gap-1"
-                onClick={() => setFilterType(filterType === 'logout' ? 'all' : 'logout')}
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
+                <Filter className="h-4 w-4" />
+                {filterType === 'all' ? 'All Events' : filterType === 'login' ? 'Login Events' : 'Logout Events'}
               </Button>
               {(searchTerm || filterType !== 'all') && (
                 <Button
