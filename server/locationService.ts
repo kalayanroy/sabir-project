@@ -3,8 +3,34 @@ import { db } from "./db";
 import { userLocationHistory } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
-// Cache for location data to avoid frequent API calls to the same coordinates
-const locationCache = new Map<string, any>();
+// Enhanced cache for location data to improve performance
+// Simple implementation that stores geocoding results with timestamps
+const locationCache = new Map<string, {
+  data: {
+    address: string;
+    city: string;
+    country: string;
+    raw: NominatimResponse | null;
+  };
+  timestamp: number;
+}>();
+
+// Cache time - 30 days in milliseconds
+const CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
+
+// Cache cleanup interval - run every hour
+const CLEANUP_INTERVAL = 60 * 60 * 1000;
+
+// Periodically clean up old cache entries
+setInterval(() => {
+  const now = Date.now();
+  // Use Array.from to avoid iterator issues
+  Array.from(locationCache.entries()).forEach(([key, entry]) => {
+    if (now - entry.timestamp > CACHE_TTL) {
+      locationCache.delete(key);
+    }
+  });
+}, CLEANUP_INTERVAL);
 
 /**
  * Interface for the Nominatim API response
@@ -44,7 +70,7 @@ export async function reverseGeocode(latitude: number, longitude: number) {
   // Check cache first
   if (locationCache.has(cacheKey)) {
     console.log(`[Location] Using cached data for ${cacheKey}`);
-    return locationCache.get(cacheKey);
+    return locationCache.get(cacheKey)!.data;
   }
   
   // Call the Nominatim API
@@ -74,23 +100,32 @@ export async function reverseGeocode(latitude: number, longitude: number) {
       raw: data
     };
     
-    // Cache the result (valid for 24 hours)
-    locationCache.set(cacheKey, result);
-    
-    // Clean up old cache entries after 24 hours
-    setTimeout(() => {
-      locationCache.delete(cacheKey);
-    }, 24 * 60 * 60 * 1000);
+    // Cache the result with timestamp
+    locationCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
     
     return result;
   } catch (error) {
     console.error('Error in reverse geocoding:', error);
-    return {
+    
+    // Create a fallback result
+    const fallbackResult = {
       address: 'Address lookup failed',
       city: 'Unknown',
       country: 'Unknown',
       raw: null
     };
+    
+    // Cache the fallback result too (but with a shorter TTL - 1 hour)
+    // This prevents repeated failed API calls
+    locationCache.set(cacheKey, {
+      data: fallbackResult,
+      timestamp: Date.now() - (CACHE_TTL - 3600000) // Will expire in 1 hour
+    });
+    
+    return fallbackResult;
   }
 }
 
@@ -181,12 +216,15 @@ export async function recordUserLocation(
 
 /**
  * Get location history for a specific user with enhanced data
+ * @param userId The user ID to fetch history for
+ * @param limit Maximum number of records to return (default 50)
  */
-export async function getUserLocationHistory(userId: number) {
-  // Get raw records from the database
+export async function getUserLocationHistory(userId: number, limit: number = 50) {
+  // Get raw records from the database with limit for better performance
   const records = await db.query.userLocationHistory.findMany({
     where: eq(userLocationHistory.userId, userId),
-    orderBy: (ulh, { desc }) => [desc(ulh.timestamp)]
+    orderBy: (ulh, { desc }) => [desc(ulh.timestamp)],
+    limit // Add limit to prevent large data fetches
   });
   
   // Process records to ensure proper formatting and data enrichment
@@ -238,11 +276,13 @@ export async function getUserLocationHistory(userId: number) {
 
 /**
  * Get all users' location history (admin only)
+ * @param limit Maximum number of records to return (default 100)
  */
-export async function getAllUsersLocationHistory() {
-  // Get raw records from the database
+export async function getAllUsersLocationHistory(limit: number = 100) {
+  // Get raw records from the database with limits for performance
   const records = await db.query.userLocationHistory.findMany({
-    orderBy: (ulh, { desc }) => [desc(ulh.timestamp)]
+    orderBy: (ulh, { desc }) => [desc(ulh.timestamp)],
+    limit // Add limit to prevent large data fetches that could slow down the admin panel
   });
   
   // Process records for consistency - same enhancement as getUserLocationHistory
