@@ -234,9 +234,27 @@ export default function SecuritySettingsPage() {
         <div className="container mx-auto max-w-3xl">
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="w-full mb-6 flex flex-wrap gap-2 md:grid md:grid-cols-3">
-              <TabsTrigger value="password" className="flex-1">Password</TabsTrigger>
-              <TabsTrigger value="preferences" className="flex-1">Security Preferences</TabsTrigger>
-              <TabsTrigger value="activity" className="flex-1">Login Activity</TabsTrigger>
+              <TabsTrigger value="password" className="flex-1">
+                <span className="flex items-center gap-1 md:hidden">
+                  <Lock className="h-3.5 w-3.5" />
+                  <span>Pass</span>
+                </span>
+                <span className="hidden md:block">Password</span>
+              </TabsTrigger>
+              <TabsTrigger value="preferences" className="flex-1">
+                <span className="flex items-center gap-1 md:hidden">
+                  <Shield className="h-3.5 w-3.5" />
+                  <span>Security</span>
+                </span>
+                <span className="hidden md:block">Security Preferences</span>
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="flex-1">
+                <span className="flex items-center gap-1 md:hidden">
+                  <Activity className="h-3.5 w-3.5" />
+                  <span>Activity</span>
+                </span>
+                <span className="hidden md:block">Login Activity</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="password">
