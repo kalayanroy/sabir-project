@@ -23,14 +23,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Loader2, 
-  Map, 
-  LogIn, 
-  LogOut,
-  MapPin,
-  AlertCircle
-} from "lucide-react";
+import { Loader2, LogIn, LogOut, MapPin, AlertCircle } from "lucide-react";
+// Import Map icon separately to avoid conflict with built-in Map object
+import { Map as MapIcon } from "lucide-react";
 
 // User location history type
 type UserLocation = {
@@ -122,7 +117,7 @@ export default function LocationManagerPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-2xl flex items-center gap-2">
-              <Map className="h-6 w-6 text-primary" />
+              <MapIcon className="h-6 w-6 text-primary" />
               Location Manager
             </CardTitle>
             <CardDescription>User login and logout location tracking</CardDescription>

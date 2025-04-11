@@ -13,9 +13,10 @@ import {
   LogIn,
   ChevronRight,
   Smartphone,
-  Info,
-  Map as MapIcon
+  Info
 } from "lucide-react";
+// Import Map icon separately to avoid conflict with built-in Map object
+import { Map as MapIcon } from "lucide-react";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
@@ -257,7 +258,7 @@ export default function HomePage() {
                         asChild
                       >
                         <a href="/location-manager" className="flex items-center">
-                          <Map className="mr-2 h-4 w-4" />
+                          <MapIcon className="mr-2 h-4 w-4" />
                           Go to Location Manager
                         </a>
                       </Button>
