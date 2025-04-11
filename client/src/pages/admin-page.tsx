@@ -61,6 +61,10 @@ type BlockedDevice = {
 export default function AdminPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Debug the user object
+  console.log("ADMIN PAGE - Current user:", user);
+  console.log("Is admin?", user?.username === "admin");
   const [selectedDevice, setSelectedDevice] = useState<BlockedDevice | null>(null);
   const [requestDetailsOpen, setRequestDetailsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");

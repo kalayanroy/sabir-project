@@ -11,9 +11,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes
   app.get("/api/admin/location-history", async (req: Request, res: Response) => {
     try {
-      // Check if user is admin
-      if (!req.isAuthenticated() || req.user?.username !== "admin") {
-        return res.status(403).json({ message: "Unauthorized access" });
+      // Debug directly to console.error for visibility
+      console.error("============= ADMIN LOCATION HISTORY DEBUG =============");
+      console.error(`Is authenticated: ${req.isAuthenticated()}`);
+      
+      if (!req.isAuthenticated()) {
+        console.error("User not authenticated - returning 403");
+        return res.status(403).json({ message: "Unauthorized access - not authenticated" });
+      }
+      
+      console.error(`Username: "${req.user.username}"`);
+      console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error("=============================================");
+      
+      // Check if user is admin with detailed error
+      if (req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
 
       const locationHistory = await getAllUsersLocationHistory();
@@ -27,20 +41,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all blocked devices (for admin)
   app.get("/api/admin/blocked-devices", async (req: Request, res: Response) => {
     try {
-      // Debug the user info with more details
-      console.log("============= ADMIN ACCESS DEBUG =============");
-      console.log("Full request user object:", JSON.stringify(req.user, null, 2));
-      console.log("Is authenticated:", req.isAuthenticated());
-      console.log("Username value:", req.user?.username);
-      console.log("Username type:", typeof req.user?.username);
-      console.log("Username comparison result:", req.user?.username === "admin");
-      console.log("Authentication check result:", !req.isAuthenticated() || req.user?.username !== "admin");
-      console.log("=============================================");
+      // Debug directly to console.error for visibility
+      console.error("============= ADMIN ACCESS DEBUG =============");
+      console.error(`Is authenticated: ${req.isAuthenticated()}`);
       
-      // Check if user is admin
-      if (!req.isAuthenticated() || req.user?.username !== "admin") {
-        console.log("Failed admin check - returning 403");
-        return res.status(403).json({ message: "Unauthorized access" });
+      if (!req.isAuthenticated()) {
+        console.error("User not authenticated - returning 403");
+        return res.status(403).json({ message: "Unauthorized access - not authenticated" });
+      }
+      
+      console.error(`User object: ${JSON.stringify(req.user, null, 2)}`);
+      console.error(`Username: "${req.user.username}"`);
+      console.error(`Username type: ${typeof req.user.username}`);
+      console.error(`Username length: ${req.user.username.length}`);
+      console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error(`Is username ADMIN? ${req.user.username.toLowerCase() === "admin"}`);
+      console.error(`Username char codes: ${Array.from(req.user.username).map(c => c.charCodeAt(0))}`);
+      console.error("=============================================");
+      
+      // Check if user is admin with detailed error
+      if (req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
       // Get blocked devices from storage
@@ -55,9 +77,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Unblock a device (admin only)
   app.post("/api/admin/unblock-device", async (req: Request, res: Response) => {
     try {
-      // Check if user is admin
-      if (!req.isAuthenticated() || req.user?.username !== "admin") {
-        return res.status(403).json({ message: "Unauthorized access" });
+      // Debug directly to console.error for visibility
+      console.error("============= ADMIN UNBLOCK DEBUG =============");
+      console.error(`Is authenticated: ${req.isAuthenticated()}`);
+      
+      if (!req.isAuthenticated()) {
+        console.error("User not authenticated - returning 403");
+        return res.status(403).json({ message: "Unauthorized access - not authenticated" });
+      }
+      
+      console.error(`Username: "${req.user.username}"`);
+      console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error("=============================================");
+      
+      // Check if user is admin with detailed error
+      if (req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
       const { deviceId } = req.body;
@@ -80,9 +116,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reject unblock request (admin only)
   app.post("/api/admin/reject-unblock-request", async (req: Request, res: Response) => {
     try {
-      // Check if user is admin
-      if (!req.isAuthenticated() || req.user?.username !== "admin") {
-        return res.status(403).json({ message: "Unauthorized access" });
+      // Debug directly to console.error for visibility
+      console.error("============= ADMIN REJECT DEBUG =============");
+      console.error(`Is authenticated: ${req.isAuthenticated()}`);
+      
+      if (!req.isAuthenticated()) {
+        console.error("User not authenticated - returning 403");
+        return res.status(403).json({ message: "Unauthorized access - not authenticated" });
+      }
+      
+      console.error(`Username: "${req.user.username}"`);
+      console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error("=============================================");
+      
+      // Check if user is admin with detailed error
+      if (req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
       const { deviceId, reason } = req.body;
