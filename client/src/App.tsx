@@ -13,7 +13,6 @@ import SecuritySettingsPage from "@/pages/security-settings-page";
 import HelpPage from "@/pages/help-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
-import { ThemeProvider } from "./hooks/use-theme";
 
 function Router() {
   return (
@@ -35,10 +34,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider>
-          <Router />
-          <Toaster />
-        </ThemeProvider>
+        <Router />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );
