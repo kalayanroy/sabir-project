@@ -74,7 +74,7 @@ export default function AdminPage() {
   }, []);
 
   // Only admin can access this page
-  if (!user || user.username !== "admin1") {
+  if (!user || user.username !== "admin") {
     return <Redirect to="/" />;
   }
 
