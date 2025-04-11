@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle2, ChevronLeft, User, Lock, Mail, Smartphone } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, User, Mail, Smartphone } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -26,10 +26,7 @@ export default function ProfilePage() {
   const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
 
-  // Password change state
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  // No longer need password change state here as it has been moved to the security settings page
 
   const handleBasicInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,64 +90,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      // Validate input
-      if (!currentPassword) {
-        throw new Error("Current password is required");
-      }
-
-      if (!newPassword) {
-        throw new Error("New password is required");
-      }
-
-      if (newPassword.length < 8) {
-        throw new Error("New password must be at least 8 characters long");
-      }
-
-      if (newPassword !== confirmPassword) {
-        throw new Error("New passwords do not match");
-      }
-
-      // Update password
-      const response = await apiRequest("POST", "/api/profile/update", {
-        currentPassword,
-        newPassword,
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to update password");
-      }
-
-      // Reset password fields
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      
-      setSuccess("Password updated successfully");
-      toast({
-        title: "Password Updated",
-        description: "Your password has been updated successfully.",
-        variant: "default",
-      });
-    } catch (err) {
-      console.error("Error updating password:", err);
-      setError(err instanceof Error ? err.message : "Failed to update password");
-      toast({
-        title: "Update Failed",
-        description: err instanceof Error ? err.message : "Failed to update password",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Password functionality moved to security settings page
 
   if (!user) return null;
 
@@ -172,10 +112,9 @@ export default function ProfilePage() {
 
       <div className="flex-1 p-4 md:p-6">
         <div className="container mx-auto max-w-3xl">
-          <Tabs defaultValue={defaultTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+          <Tabs defaultValue="basic-info" className="w-full">
+            <TabsList className="grid w-full grid-cols-1 mb-6">
               <TabsTrigger value="basic-info">Basic Information</TabsTrigger>
-              <TabsTrigger value="password">Password</TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic-info">
@@ -252,6 +191,23 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     </div>
+                    
+                    <div className="rounded-lg bg-blue-50 p-4 border border-blue-200">
+                      <div className="flex items-start">
+                        <AlertCircle className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
+                        <div>
+                          <h4 className="text-sm font-medium text-blue-800 mb-1">Security Settings</h4>
+                          <p className="text-xs text-blue-700 mb-2">
+                            To manage your password and security preferences, please visit the Security Settings page.
+                          </p>
+                          <Link href="/security">
+                            <Button variant="outline" size="sm" className="bg-white text-blue-700 border-blue-200 hover:bg-blue-50">
+                              Go to Security Settings
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                   <CardFooter>
                     <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
@@ -262,88 +218,7 @@ export default function ProfilePage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="password">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Lock className="h-5 w-5 mr-2 text-primary" />
-                    Change Password
-                  </CardTitle>
-                  <CardDescription>
-                    Update your password to keep your account secure
-                  </CardDescription>
-                </CardHeader>
-                <form onSubmit={handlePasswordSubmit}>
-                  <CardContent className="space-y-4">
-                    {error && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{error}</AlertDescription>
-                      </Alert>
-                    )}
-                    {success && (
-                      <Alert variant="default" className="bg-green-50 border-green-200 text-green-800">
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        <AlertDescription>{success}</AlertDescription>
-                      </Alert>
-                    )}
-
-                    <div className="space-y-2">
-                      <Label htmlFor="currentPassword">Current Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="currentPassword"
-                          type="password"
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          className="pl-10"
-                          placeholder="Enter your current password"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword">New Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="newPassword"
-                          type="password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="pl-10"
-                          placeholder="Enter your new password"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Password must be at least 8 characters long
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="pl-10"
-                          placeholder="Confirm your new password"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
-                      {isLoading ? "Updating Password..." : "Update Password"}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-            </TabsContent>
+            {/* Password functionality moved to the Security Settings page */}
           </Tabs>
         </div>
       </div>

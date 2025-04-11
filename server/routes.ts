@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { getAllUsersLocationHistory } from "./locationService";
+import { getAllUsersLocationHistory, getUserLocationHistory } from "./locationService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -172,6 +172,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating profile:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+  
+  // Get location history for a specific user
+  app.get("/api/user-location-history", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Get the user ID from the query parameter
+      const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : req.user.id;
+      
+      // Security check - regular users can only view their own history
+      // Admin users can view any user's history
+      if (req.user.id !== userId && req.user.username !== "admin1") {
+        return res.status(403).json({ message: "Forbidden: You can only view your own login history" });
+      }
+      
+      // Get the user's location history
+      const locationHistory = await getUserLocationHistory(userId);
+      
+      res.json(locationHistory);
+    } catch (error) {
+      console.error("Error fetching user location history:", error);
+      res.status(500).json({ message: "Failed to fetch location history" });
     }
   });
 
