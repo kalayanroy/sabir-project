@@ -175,9 +175,9 @@ export default function HomePage() {
                   asChild
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <a href="#" className="flex items-center">
+                  <a href="/security" className="flex items-center">
                     <Settings className="mr-3 h-5 w-5 text-muted-foreground" />
-                    Settings
+                    Security Settings
                   </a>
                 </Button>
               </li>
@@ -254,9 +254,9 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Button variant="ghost" className="w-full justify-start font-normal" asChild>
-                    <a href="#" className="flex items-center">
+                    <a href="/security" className="flex items-center">
                       <Settings className="mr-3 h-5 w-5 text-muted-foreground" />
-                      Settings
+                      Security Settings
                     </a>
                   </Button>
                 </li>
@@ -309,7 +309,7 @@ export default function HomePage() {
                       <h3 className="text-lg font-medium mb-2">Security Settings</h3>
                       <p className="text-muted-foreground mb-4">Update your password and security preferences</p>
                       <Button variant="link" className="p-0 h-auto flex items-center text-primary" asChild>
-                        <a href="/profile?tab=password">
+                        <a href="/security">
                           <span>Manage Security</span>
                           <ChevronRight className="ml-1 h-4 w-4" />
                         </a>
