@@ -103,12 +103,16 @@ export async function recordUserLocation(
   locationData: LocationData
 ) {
   try {
-    // Get user info to include in location history
+    // Get user info and device info to include in location history
     const userInfo = await db.query.users.findFirst({
       where: (users, { eq }) => eq(users.id, userId),
       columns: {
         username: true,
-        email: true
+        email: true,
+        deviceId: true,
+        deviceName: true,
+        deviceModel: true,
+        devicePlatform: true
       }
     });
     
