@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -23,7 +23,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LogIn, LogOut, MapPin, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { 
+  Loader2, 
+  LogIn, 
+  LogOut, 
+  MapPin, 
+  AlertCircle,
+  ArrowLeft,
+  Search,
+  Filter,
+  X,
+  Home
+} from "lucide-react";
 // Import Map icon separately to avoid conflict with built-in Map object
 import { Map as MapIcon } from "lucide-react";
 
@@ -50,6 +62,8 @@ type UserLocation = {
 export default function LocationManagerPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<'all' | 'login' | 'logout'>('all');
   
   // Set page title
   useEffect(() => {
@@ -79,6 +93,28 @@ export default function LocationManagerPage() {
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleString();
+  };
+  
+  // Filter locations based on search term and event type
+  const filteredLocations = locationHistory 
+    ? locationHistory.filter(location => {
+        const matchesSearch = !searchTerm || 
+          (location.username && location.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (location.email && location.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (location.ipAddress && location.ipAddress.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (location.addressInfo?.city && location.addressInfo.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (location.addressInfo?.country && location.addressInfo.country.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        const matchesType = filterType === 'all' || location.eventType === filterType;
+        
+        return matchesSearch && matchesType;
+      })
+    : [];
+    
+  // Clear search and filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterType('all');
   };
 
   if (isLoading) {
@@ -116,79 +152,189 @@ export default function LocationManagerPage() {
       <Card className="max-w-6xl mx-auto">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <MapIcon className="h-6 w-6 text-primary" />
-              Location Manager
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                asChild 
+                className="mr-2"
+              >
+                <Link href="/">
+                  <ArrowLeft className="h-5 w-5" />
+                  <span className="sr-only">Back to Home</span>
+                </Link>
+              </Button>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <MapIcon className="h-6 w-6 text-primary" />
+                Location Manager
+              </CardTitle>
+            </div>
             <CardDescription>User login and logout location tracking</CardDescription>
           </div>
           <Button size="sm" onClick={() => refetchLocations()}>Refresh</Button>
         </CardHeader>
 
         <CardContent>
-          {locationHistory && locationHistory.length > 0 ? (
-            <Table>
-              <TableCaption>User Login/Logout Location History</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Event</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>Device Info</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {locationHistory.map((location) => (
-                  <TableRow key={location.id}>
-                    <TableCell>
-                      <div className="font-medium">{location.username || "Unknown"}</div>
-                      <div className="text-xs text-muted-foreground">{location.email}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={location.eventType === 'login' ? 'default' : 'secondary'} className="flex items-center gap-1">
-                        {location.eventType === 'login' ? (
+          {/* Search and filter controls */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by user, location, IP..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1 h-7 w-7"
+                  onClick={() => setSearchTerm("")}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Clear search</span>
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={filterType === 'login' ? "default" : "outline"}
+                className="gap-1"
+                onClick={() => setFilterType(filterType === 'login' ? 'all' : 'login')}
+              >
+                <LogIn className="h-4 w-4" />
+                Login
+              </Button>
+              <Button
+                variant={filterType === 'logout' ? "default" : "outline"}
+                className="gap-1"
+                onClick={() => setFilterType(filterType === 'logout' ? 'all' : 'logout')}
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+              {(searchTerm || filterType !== 'all') && (
+                <Button
+                  variant="ghost"
+                  className="gap-1"
+                  onClick={clearFilters}
+                >
+                  <X className="h-4 w-4" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {filteredLocations.length > 0 ? (
+            <div className="border rounded-md overflow-auto">
+              <Table>
+                <TableCaption>User Login/Logout Location History</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead className="hidden sm:table-cell">Event</TableHead>
+                    <TableHead className="hidden md:table-cell">Time</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead>Latitude/Longitude</TableHead>
+                    <TableHead className="hidden lg:table-cell">IP Address</TableHead>
+                    <TableHead className="hidden xl:table-cell">Device Info</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLocations.map((location) => (
+                    <TableRow key={location.id}>
+                      <TableCell>
+                        <div className="font-medium">{location.username || "Unknown"}</div>
+                        <div className="text-xs text-muted-foreground">{location.email}</div>
+                        <div className="sm:hidden mt-1">
+                          <Badge variant={location.eventType === 'login' ? 'default' : 'secondary'} className="flex items-center gap-1">
+                            {location.eventType === 'login' ? (
+                              <>
+                                <LogIn className="h-3 w-3" />
+                                Login
+                              </>
+                            ) : (
+                              <>
+                                <LogOut className="h-3 w-3" />
+                                Logout
+                              </>
+                            )}
+                          </Badge>
+                        </div>
+                        <div className="md:hidden mt-1 text-xs text-muted-foreground">
+                          {formatDate(location.timestamp)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant={location.eventType === 'login' ? 'default' : 'secondary'} className="flex items-center gap-1">
+                          {location.eventType === 'login' ? (
+                            <>
+                              <LogIn className="h-3 w-3" />
+                              Login
+                            </>
+                          ) : (
+                            <>
+                              <LogOut className="h-3 w-3" />
+                              Logout
+                            </>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell whitespace-nowrap">
+                        {formatDate(location.timestamp)}
+                      </TableCell>
+                      <TableCell>
+                        {location.latitude && location.longitude ? (
+                          <div className="flex items-start gap-1">
+                            <MapPin className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                              {location.addressInfo?.formatted || 
+                                `${location.addressInfo?.city || ''} ${location.addressInfo?.state || ''} ${location.addressInfo?.country || ''}` || 
+                                "Unknown location"}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">No location data</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {location.latitude && location.longitude ? (
                           <>
-                            <LogIn className="h-3 w-3" />
-                            Login
+                            <div>{location.latitude.toFixed(6)}</div>
+                            <div>{location.longitude.toFixed(6)}</div>
                           </>
                         ) : (
-                          <>
-                            <LogOut className="h-3 w-3" />
-                            Logout
-                          </>
+                          <span className="text-muted-foreground">N/A</span>
                         )}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(location.timestamp)}</TableCell>
-                    <TableCell>
-                      {location.latitude && location.longitude ? (
-                        <div className="flex items-start gap-1">
-                          <MapPin className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                          <div>
-                            {location.addressInfo?.formatted || 
-                              `${location.addressInfo?.city || ''} ${location.addressInfo?.state || ''} ${location.addressInfo?.country || ''}` || 
-                              `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">No location data</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs">{location.ipAddress || "N/A"}</code>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {location.deviceInfo || "N/A"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <code className="text-xs">{location.ipAddress || "N/A"}</code>
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell max-w-[200px] truncate">
+                        {location.deviceInfo || "N/A"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
-            <div className="text-center p-8 text-muted-foreground">
-              <p>No location history found.</p>
+            <div className="text-center p-12 border rounded-md bg-muted/10">
+              {locationHistory && locationHistory.length > 0 ? (
+                <div>
+                  <p className="text-lg font-medium mb-2">No locations match your filters</p>
+                  <p className="text-muted-foreground mb-4">Try adjusting your search or filter criteria.</p>
+                  <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
+                </div>
+              ) : (
+                <div>
+                  <MapIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium mb-2">No location history found</p>
+                  <p className="text-muted-foreground">Location data will appear here when users log in or out.</p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
