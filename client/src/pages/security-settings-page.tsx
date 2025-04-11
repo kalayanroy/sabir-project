@@ -62,7 +62,7 @@ export default function SecuritySettingsPage() {
   const [notifyOnLogin, setNotifyOnLogin] = useState(true);
   const [requireLocation, setRequireLocation] = useState(true);
   
-  // Login history state (mock data - would be populated from an API in a real implementation)
+  // Login history state for real location data
   const [loginHistory, setLoginHistory] = useState<Array<{
     date: string;
     ipAddress: string;
@@ -70,34 +70,68 @@ export default function SecuritySettingsPage() {
     device: string;
     success: boolean;
   }>>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   useEffect(() => {
-    // This would be replaced with a real API fetch in a complete implementation
-    // Load login history
-    const mockLoginHistory = [
-      {
-        date: new Date().toISOString(),
-        ipAddress: "192.168.1.1",
-        location: "New York, USA",
-        device: user?.deviceName || "Unknown Device",
-        success: true
-      },
-      {
-        date: new Date(Date.now() - 86400000).toISOString(), // yesterday
-        ipAddress: "192.168.1.1",
-        location: "New York, USA",
-        device: user?.deviceName || "Unknown Device",
-        success: true
-      },
-      {
-        date: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-        ipAddress: "192.168.1.1",
-        location: "New York, USA",
-        device: user?.deviceName || "Unknown Device",
-        success: true
+    // Fetch the user's login history from the backend
+    const fetchLoginHistory = async () => {
+      if (!user) return;
+      
+      setIsLoadingHistory(true);
+      setHistoryError(null);
+      
+      try {
+        // Get user ID from current login
+        const userId = user.id;
+        
+        // Fetch login history for the current user
+        const response = await fetch(`/api/user-location-history?userId=${userId}`);
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch login history");
+        }
+        
+        const locationData = await response.json();
+        
+        // Transform the data to match our UI format
+        const formattedHistory = locationData.map((entry: any) => {
+          // Format address information
+          let locationStr = "Unknown";
+          if (entry.addressInfo) {
+            const addr = entry.addressInfo;
+            const parts = [];
+            if (addr.city) parts.push(addr.city);
+            if (addr.state) parts.push(addr.state);
+            if (addr.country) parts.push(addr.country);
+            if (parts.length > 0) {
+              locationStr = parts.join(", ");
+            } else if (addr.formatted) {
+              locationStr = addr.formatted;
+            }
+          } else if (entry.latitude && entry.longitude) {
+            locationStr = `${entry.latitude.toFixed(4)}, ${entry.longitude.toFixed(4)}`;
+          }
+          
+          return {
+            date: entry.timestamp,
+            ipAddress: entry.ipAddress || "Unknown",
+            location: locationStr,
+            device: entry.deviceInfo || user.deviceName || "Unknown Device",
+            success: true // Assuming all records are successful logins/logouts
+          };
+        });
+        
+        setLoginHistory(formattedHistory);
+      } catch (error) {
+        console.error("Error fetching login history:", error);
+        setHistoryError(error instanceof Error ? error.message : "Failed to load login history");
+      } finally {
+        setIsLoadingHistory(false);
       }
-    ];
-    setLoginHistory(mockLoginHistory);
+    };
+    
+    fetchLoginHistory();
   }, [user]);
 
   const togglePasswordVisibility = () => {
@@ -490,63 +524,87 @@ export default function SecuritySettingsPage() {
                       </div>
                     </div>
                     
-                    <div className="rounded-lg border overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-muted">
-                          <tr>
-                            <th className="px-4 py-3 text-left font-medium">Date & Time</th>
-                            <th className="px-4 py-3 text-left font-medium hidden md:table-cell">IP Address</th>
-                            <th className="px-4 py-3 text-left font-medium">Location</th>
-                            <th className="px-4 py-3 text-left font-medium hidden md:table-cell">Device</th>
-                            <th className="px-4 py-3 text-left font-medium">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {loginHistory.map((entry, index) => (
-                            <tr key={index} className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}>
-                              <td className="px-4 py-3">
-                                {new Date(entry.date).toLocaleString()}
-                              </td>
-                              <td className="px-4 py-3 hidden md:table-cell font-mono text-xs">
-                                {entry.ipAddress}
-                              </td>
-                              <td className="px-4 py-3">
-                                {entry.location}
-                              </td>
-                              <td className="px-4 py-3 hidden md:table-cell">
-                                {entry.device}
-                              </td>
-                              <td className="px-4 py-3">
-                                {entry.success ? (
-                                  <span className="inline-flex items-center text-green-700 bg-green-50 px-2 py-1 rounded-full text-xs">
-                                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                                    Success
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center text-red-700 bg-red-50 px-2 py-1 rounded-full text-xs">
-                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                    Failed
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                          {loginHistory.length === 0 && (
-                            <tr>
-                              <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                                No login activity to display
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                    {/* Error state */}
+                    {historyError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{historyError}</AlertDescription>
+                      </Alert>
+                    )}
                     
-                    <div className="flex items-center justify-center">
-                      <Button variant="outline" disabled={true}>
-                        Load More
-                      </Button>
-                    </div>
+                    {/* Loading state */}
+                    {isLoadingHistory && (
+                      <div className="flex justify-center py-8">
+                        <div className="flex flex-col items-center space-y-2">
+                          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                          <p className="text-sm text-muted-foreground">Loading login history...</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Data table */}
+                    {!isLoadingHistory && !historyError && (
+                      <div className="rounded-lg border overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-medium">Date & Time</th>
+                              <th className="px-4 py-3 text-left font-medium hidden md:table-cell">IP Address</th>
+                              <th className="px-4 py-3 text-left font-medium">Location</th>
+                              <th className="px-4 py-3 text-left font-medium hidden md:table-cell">Device</th>
+                              <th className="px-4 py-3 text-left font-medium">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {loginHistory.map((entry, index) => (
+                              <tr key={index} className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}>
+                                <td className="px-4 py-3">
+                                  {new Date(entry.date).toLocaleString()}
+                                </td>
+                                <td className="px-4 py-3 hidden md:table-cell font-mono text-xs">
+                                  {entry.ipAddress}
+                                </td>
+                                <td className="px-4 py-3">
+                                  {entry.location}
+                                </td>
+                                <td className="px-4 py-3 hidden md:table-cell">
+                                  {entry.device}
+                                </td>
+                                <td className="px-4 py-3">
+                                  {entry.success ? (
+                                    <span className="inline-flex items-center text-green-700 bg-green-50 px-2 py-1 rounded-full text-xs">
+                                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                                      Success
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center text-red-700 bg-red-50 px-2 py-1 rounded-full text-xs">
+                                      <AlertCircle className="h-3 w-3 mr-1" />
+                                      Failed
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                            {loginHistory.length === 0 && !isLoadingHistory && (
+                              <tr>
+                                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                  No login activity to display
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    
+                    {/* Pagination (disabled for now) */}
+                    {loginHistory.length > 0 && !isLoadingHistory && (
+                      <div className="flex items-center justify-center">
+                        <Button variant="outline" disabled={true}>
+                          Load More
+                        </Button>
+                      </div>
+                    )}
                     
                     <div className="rounded-lg bg-amber-50 p-4 border border-amber-200 mt-4">
                       <div className="flex">
