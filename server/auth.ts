@@ -395,19 +395,14 @@ export function setupAuth(app: Express) {
             return next(err);
           }
           
-          // Record login location
-          try {
-            // Cast locationData to proper type and record login event
-            await recordUserLocation(
-              user.id, 
-              'login', 
-              locationData as LocationData
-            );
-            console.log(`Recorded login location for user ${user.id}`);
-          } catch (error) {
-            console.error("Failed to record login location:", error);
-            // Don't block the login if location recording fails
-          }
+          // Record login location - non-blocking for performance
+          const userId = user.id; // Store ID for async usage
+          setTimeout(() => {
+            // Cast locationData to proper type and record login event in background
+            recordUserLocation(userId, 'login', locationData as LocationData)
+              .then(() => console.log(`Recorded login location for user ${userId}`))
+              .catch(error => console.error("Failed to record login location:", error));
+          }, 0);
           
           // Return user data without password
           const { password, ...userData } = user;
@@ -433,19 +428,17 @@ export function setupAuth(app: Express) {
       locationData.ipAddress = ipAddress;
     }
     
-    // If user is authenticated, record the logout location
+    // If user is authenticated, record the logout location in background without blocking
     if (req.isAuthenticated() && req.user) {
-      try {
-        await recordUserLocation(
-          req.user.id, 
-          'logout', 
-          locationData as LocationData
-        );
-        console.log(`Recorded logout location for user ${req.user.id}`);
-      } catch (error) {
-        console.error("Failed to record logout location:", error);
-        // Don't block logout if location recording fails
-      }
+      // Store user ID before logout
+      const userId = req.user.id;
+      
+      // Fire and forget - don't wait for this to complete
+      setTimeout(() => {
+        recordUserLocation(userId, 'logout', locationData as LocationData)
+          .then(() => console.log(`Recorded logout location for user ${userId}`))
+          .catch(err => console.error("Failed to record logout location:", err));
+      }, 0);
     }
     
     req.logout((err) => {
