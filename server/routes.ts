@@ -261,6 +261,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch location history" });
     }
   });
+  
+  // Get all users (admin only)
+  app.get("/api/admin/users", async (req: Request, res: Response) => {
+    try {
+      // Debug directly to console.error for visibility
+      console.error("============= ADMIN GET USERS DEBUG =============");
+      console.error(`Is authenticated: ${req.isAuthenticated()}`);
+      
+      if (!req.isAuthenticated()) {
+        console.error("User not authenticated - returning 403");
+        return res.status(403).json({ message: "Unauthorized access - not authenticated" });
+      }
+      
+      console.error(`Username: "${req.user.username}"`);
+      console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error("=============================================");
+      
+      // Check if user is admin with detailed error
+      if (req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const users = await storage.getAllUsers();
+      
+      // Don't send password hashes to the client
+      const safeUsers = users.map(user => {
+        const { password, ...safeUser } = user;
+        return safeUser;
+      });
+      
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+  
+  // Update user role (admin only)
+  app.post("/api/admin/update-user-role", async (req: Request, res: Response) => {
+    try {
+      // Debug directly to console.error for visibility
+      console.error("============= ADMIN UPDATE ROLE DEBUG =============");
+      console.error(`Is authenticated: ${req.isAuthenticated()}`);
+      
+      if (!req.isAuthenticated()) {
+        console.error("User not authenticated - returning 403");
+        return res.status(403).json({ message: "Unauthorized access - not authenticated" });
+      }
+      
+      console.error(`Username: "${req.user.username}"`);
+      console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error("=============================================");
+      
+      // Check if user is admin with detailed error
+      if (req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const { userId, role } = req.body;
+      
+      if (!userId || !role || (role !== "user" && role !== "admin")) {
+        return res.status(400).json({ message: "Valid user ID and role (user or admin) required" });
+      }
+      
+      const updatedUser = await storage.updateUserRole(userId, role);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't send password hash to the client
+      const { password, ...safeUser } = updatedUser;
+      
+      res.json({
+        success: true,
+        message: `User role updated to ${role} successfully`,
+        user: safeUser
+      });
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
 
   const httpServer = createServer(app);
 
