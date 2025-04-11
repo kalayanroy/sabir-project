@@ -105,12 +105,30 @@ export function setupAuth(app: Express) {
     ),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user, done) => {
+    console.error(`Serializing user: ${JSON.stringify(user)}`);
+    done(null, user.id);
+  });
+  
   passport.deserializeUser(async (id: number, done) => {
     try {
+      console.error(`Deserializing user with ID: ${id}`);
       const user = await storage.getUser(id);
+      console.error(`Deserialized user: ${JSON.stringify(user, (key, value) => 
+        key === 'password' ? '[REDACTED]' : value
+      )}`);
+      
+      // Add debugging for admin check
+      if (user) {
+        console.error(`User username: "${user.username}"`);
+        console.error(`Username length: ${user.username.length}`);
+        console.error(`Is admin? ${user.username === "admin"}`);
+        console.error(`Username char codes: [${[...user.username].map(c => c.charCodeAt(0))}]`);
+      }
+      
       done(null, user);
     } catch (error) {
+      console.error(`Error deserializing user with ID ${id}:`, error);
       done(error);
     }
   });
@@ -493,7 +511,7 @@ export function setupAuth(app: Express) {
   
   // Get all blocked devices
   app.get("/api/admin/blocked-devices", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin1") {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
       return res.status(403).send("Unauthorized");
     }
     
@@ -507,7 +525,7 @@ export function setupAuth(app: Express) {
   
   // Get all user location history (admin only)
   app.get("/api/admin/user-locations", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin1") {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
       return res.status(403).send("Unauthorized");
     }
     
@@ -522,7 +540,7 @@ export function setupAuth(app: Express) {
   
   // Get location history for a specific user (admin only)
   app.get("/api/admin/user-locations/:userId", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin1") {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
       return res.status(403).send("Unauthorized");
     }
     
@@ -542,7 +560,7 @@ export function setupAuth(app: Express) {
   
   // Get all unblock requests
   app.get("/api/admin/unblock-requests", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin1") {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
       return res.status(403).send("Unauthorized");
     }
     
@@ -558,7 +576,7 @@ export function setupAuth(app: Express) {
   
   // Unblock a device (approve request)
   app.post("/api/admin/unblock-device", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin1") {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
       return res.status(403).send("Unauthorized");
     }
     
@@ -584,7 +602,7 @@ export function setupAuth(app: Express) {
   
   // Reject an unblock request
   app.post("/api/admin/reject-unblock-request", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.username !== "admin1") {
+    if (!req.isAuthenticated() || req.user.username !== "admin") {
       return res.status(403).send("Unauthorized");
     }
     
