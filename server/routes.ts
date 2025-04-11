@@ -89,6 +89,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile
+  app.post("/api/profile/update", async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userId = req.user.id;
+      const { username, email, currentPassword, newPassword } = req.body;
+      
+      // Get the current user to verify password if needed
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Prepare update data
+      const updateData: Partial<typeof currentUser> = {};
+      
+      // Validate username update
+      if (username && username !== currentUser.username) {
+        // Check if username already exists
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ message: "Username already taken" });
+        }
+        updateData.username = username;
+      }
+      
+      // Validate email update
+      if (email && email !== currentUser.email) {
+        // Check if email already exists
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ message: "Email already in use" });
+        }
+        updateData.email = email;
+      }
+      
+      // Handle password update if provided
+      if (newPassword) {
+        // Verify current password before updating
+        if (!currentPassword) {
+          return res.status(400).json({ message: "Current password is required to set a new password" });
+        }
+        
+        // Import the password comparison function from auth.ts
+        const { comparePasswords, hashPassword } = await import('./auth');
+        
+        // Verify current password
+        const isPasswordValid = await comparePasswords(currentPassword, currentUser.password);
+        if (!isPasswordValid) {
+          return res.status(400).json({ message: "Current password is incorrect" });
+        }
+        
+        // Hash new password
+        updateData.password = await hashPassword(newPassword);
+      }
+      
+      // Update user if there are changes
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "No changes to update" });
+      }
+      
+      // Perform update
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update profile" });
+      }
+      
+      // Return updated user without password
+      const { password, ...userData } = updatedUser;
+      res.json({
+        success: true,
+        message: "Profile updated successfully",
+        user: userData
+      });
+      
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
