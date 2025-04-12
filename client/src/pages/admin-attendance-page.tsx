@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -267,70 +268,217 @@ const AdminAttendancePage = () => {
         <TabsContent value="dashboard">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="md:col-span-3">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Attendance Overview</CardTitle>
-                  <CardDescription>All attendance records in the system</CardDescription>
+              <CardHeader>
+                <div className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Attendance Overview</CardTitle>
+                    <CardDescription>All attendance records in the system</CardDescription>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="userFilter">Filter by User:</Label>
-                  <Select 
-                    onValueChange={(value) => setSelectedUserId(value === "0" ? null : parseInt(value))}
-                    value={selectedUserId?.toString() || "0"}
-                  >
-                    <SelectTrigger id="userFilter" className="w-[200px]">
-                      <SelectValue placeholder="Select a user" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">All Users</SelectItem>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.username}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Separator className="my-4" />
+                <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="userFilter">Filter by User</Label>
+                    <Select 
+                      onValueChange={(value) => setSelectedUserId(value === "0" ? null : parseInt(value))}
+                      value={selectedUserId?.toString() || "0"}
+                    >
+                      <SelectTrigger id="userFilter" className="w-full sm:w-[200px]">
+                        <SelectValue placeholder="Select a user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">All Users</SelectItem>
+                        {users.map((user) => (
+                          <SelectItem key={user.id} value={user.id.toString()}>
+                            {user.username}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="statusFilter">Status</Label>
+                    <Select 
+                      onValueChange={(value) => setStatusFilter(value)}
+                      value={statusFilter}
+                    >
+                      <SelectTrigger id="statusFilter" className="w-full sm:w-[200px]">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="present">Present</SelectItem>
+                        <SelectItem value="absent">Absent</SelectItem>
+                        <SelectItem value="late">Late</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="fromDate">From Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full sm:w-[200px] justify-start text-left font-normal"
+                          id="fromDate"
+                        >
+                          {fromDate ? format(fromDate, "PPP") : <span>Pick a date</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={fromDate}
+                          onSelect={setFromDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="toDate">To Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full sm:w-[200px] justify-start text-left font-normal"
+                          id="toDate"
+                        >
+                          {toDate ? format(toDate, "PPP") : <span>Pick a date</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={toDate}
+                          onSelect={setToDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="flex items-end">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setFromDate(undefined);
+                        setToDate(undefined);
+                        setStatusFilter("all");
+                        setSelectedUserId(null);
+                      }}
+                    >
+                      Reset Filters
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 {isLoadingRecords ? (
                   <div className="text-center py-4">Loading records...</div>
                 ) : attendanceRecords.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>User</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Clock In</TableHead>
-                          <TableHead>Clock Out</TableHead>
-                          <TableHead>Hours</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {attendanceRecords
-                          .filter(record => selectedUserId ? record.userId === selectedUserId : true)
-                          .slice(0, 20)
-                          .map((record) => (
-                            <TableRow key={record.id}>
-                              <TableCell>{formatDate(record.date)}</TableCell>
-                              <TableCell>{getUserName(record.userId)}</TableCell>
-                              <TableCell>{getLocationName(record.workLocationId)}</TableCell>
-                              <TableCell>{formatTime(record.clockInTime)}</TableCell>
-                              <TableCell>{formatTime(record.clockOutTime)}</TableCell>
-                              <TableCell>
-                                {record.totalHours?.toFixed(1) || "-"}
-                              </TableCell>
-                              <TableCell>
-                                {getStatusBadge(record.status, record.isWithinGeofence)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <>
+                    {/* Mobile view */}
+                    <div className="grid grid-cols-1 gap-4 sm:hidden">
+                      {attendanceRecords
+                        .filter(record => {
+                          // Filter by user
+                          const userMatch = selectedUserId ? record.userId === selectedUserId : true;
+                          
+                          // Filter by status
+                          const statusMatch = statusFilter === "all" ? true : record.status === statusFilter;
+                          
+                          // Filter by date range
+                          const recordDate = new Date(record.date);
+                          const fromDateMatch = fromDate ? recordDate >= fromDate : true;
+                          const toDateMatch = toDate ? recordDate <= toDate : true;
+                          
+                          return userMatch && statusMatch && fromDateMatch && toDateMatch;
+                        })
+                        .slice(0, 10)
+                        .map((record) => (
+                          <Card key={record.id} className="p-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="font-medium">{formatDate(record.date)}</div>
+                              <div>{getStatusBadge(record.status, record.isWithinGeofence)}</div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground">User:</span>
+                                <span>{getUserName(record.userId)}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground">Location:</span>
+                                <span>{getLocationName(record.workLocationId)}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground">Clock In:</span>
+                                <span>{formatTime(record.clockInTime)}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground">Clock Out:</span>
+                                <span>{formatTime(record.clockOutTime)}</span>
+                              </div>
+                              <div className="flex flex-col col-span-2">
+                                <span className="text-muted-foreground">Hours:</span>
+                                <span>{record.totalHours?.toFixed(1) || "-"}</span>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                    </div>
+                    
+                    {/* Desktop view */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>User</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Clock In</TableHead>
+                            <TableHead>Clock Out</TableHead>
+                            <TableHead>Hours</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {attendanceRecords
+                            .filter(record => {
+                              // Filter by user
+                              const userMatch = selectedUserId ? record.userId === selectedUserId : true;
+                              
+                              // Filter by status
+                              const statusMatch = statusFilter === "all" ? true : record.status === statusFilter;
+                              
+                              // Filter by date range
+                              const recordDate = new Date(record.date);
+                              const fromDateMatch = fromDate ? recordDate >= fromDate : true;
+                              const toDateMatch = toDate ? recordDate <= toDate : true;
+                              
+                              return userMatch && statusMatch && fromDateMatch && toDateMatch;
+                            })
+                            .slice(0, 20)
+                            .map((record) => (
+                              <TableRow key={record.id}>
+                                <TableCell>{formatDate(record.date)}</TableCell>
+                                <TableCell>{getUserName(record.userId)}</TableCell>
+                                <TableCell>{getLocationName(record.workLocationId)}</TableCell>
+                                <TableCell>{formatTime(record.clockInTime)}</TableCell>
+                                <TableCell>{formatTime(record.clockOutTime)}</TableCell>
+                                <TableCell>
+                                  {record.totalHours?.toFixed(1) || "-"}
+                                </TableCell>
+                                <TableCell>
+                                  {getStatusBadge(record.status, record.isWithinGeofence)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
                     No attendance records found
@@ -630,56 +778,112 @@ const AdminAttendancePage = () => {
                 <CardDescription>Analyze attendance data for all users</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">Present Today</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">
-                        {attendanceRecords.filter(record => 
-                          isToday(new Date(record.date)) && record.status === "present"
-                        ).length}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">Absent Today</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">
-                        {attendanceRecords.filter(record => 
-                          isToday(new Date(record.date)) && record.status === "absent"
-                        ).length}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">Late Today</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">
-                        {attendanceRecords.filter(record => 
-                          isToday(new Date(record.date)) && record.status === "late"
-                        ).length}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">Total Users</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">{users.length}</div>
-                    </CardContent>
-                  </Card>
+                {/* Responsive grid layout for report cards */}
+                <div className="grid gap-6">
+                  {/* First row - Present and Absent - will be side by side on all devices */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">Present Today</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-bold">
+                          {attendanceRecords.filter(record => 
+                            isToday(new Date(record.date)) && record.status === "present"
+                          ).length}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">Absent Today</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-bold">
+                          {attendanceRecords.filter(record => 
+                            isToday(new Date(record.date)) && record.status === "absent"
+                          ).length}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  {/* Second row - Late and Total - will be side by side on all devices */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">Late Today</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-bold">
+                          {attendanceRecords.filter(record => 
+                            isToday(new Date(record.date)) && record.status === "late"
+                          ).length}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">Total Users</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-bold">{users.length}</div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
 
                 <div className="mt-6">
                   <h3 className="text-lg font-semibold mb-4">Attendance Summary</h3>
-                  <div className="overflow-x-auto">
+                  
+                  {/* Responsive Table Design */}
+                  <div className="grid grid-cols-1 gap-4 sm:hidden">
+                    {users.map(user => {
+                      const userRecords = attendanceRecords.filter(record => record.userId === user.id);
+                      const presentCount = userRecords.filter(record => record.status === "present").length;
+                      const absentCount = userRecords.filter(record => record.status === "absent").length;
+                      const lateCount = userRecords.filter(record => record.status === "late").length;
+                      const totalHours = userRecords.reduce((total, record) => total + (record.totalHours || 0), 0);
+                      
+                      return (
+                        <Card key={user.id} className="p-4">
+                          <div className="font-medium text-lg mb-2">{user.username}</div>
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            <div>
+                              <span className="text-muted-foreground text-sm">Present:</span>
+                              <span className="ml-2 font-medium">{presentCount}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-sm">Absent:</span>
+                              <span className="ml-2 font-medium">{absentCount}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-sm">Late:</span>
+                              <span className="ml-2 font-medium">{lateCount}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-sm">Hours:</span>
+                              <span className="ml-2 font-medium">{totalHours.toFixed(1)}</span>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              setSelectedUserId(user.id);
+                              setActiveTab("dashboard");
+                            }}
+                          >
+                            View Details
+                          </Button>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Desktop Table */}
+                  <div className="hidden sm:block overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
