@@ -85,6 +85,56 @@ export const locationDataSchema = z.object({
   ipAddress: z.string().optional(),
 });
 
+// Attendance management tables
+export const workLocations = pgTable("workLocations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  address: text("address").notNull(),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  radius: doublePrecision("radius").default(100), // Geofence radius in meters
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
+export const userWorkLocations = pgTable("userWorkLocations", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  locationId: integer("locationId").notNull(),
+  assignedAt: timestamp("assignedAt").defaultNow(),
+});
+
+export const attendance = pgTable("attendance", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  workLocationId: integer("workLocationId").notNull(),
+  clockInTime: timestamp("clockInTime").notNull(),
+  clockOutTime: timestamp("clockOutTime"),
+  totalHours: doublePrecision("totalHours"),
+  status: text("status").default("present"), // 'present', 'absent', 'late', 'half-day'
+  notes: text("notes"),
+  clockInLocationId: integer("clockInLocationId"), // Reference to userLocationHistory
+  clockOutLocationId: integer("clockOutLocationId"), // Reference to userLocationHistory
+  isWithinGeofence: boolean("isWithinGeofence").default(true),
+  date: timestamp("date").notNull(), // The date of this attendance record
+});
+
+// Schemas for new tables
+export const workLocationSchema = createInsertSchema(workLocations)
+  .extend({
+    name: z.string().min(1, "Location name is required"),
+    address: z.string().min(1, "Address is required"),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    radius: z.number().min(10).max(5000),
+  });
+
+export const attendanceSchema = createInsertSchema(attendance)
+  .extend({
+    status: z.enum(["present", "absent", "late", "half-day"]).default("present"),
+  });
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -93,3 +143,7 @@ export type InsertDeviceAttempt = typeof deviceAttempts.$inferInsert;
 export type UserLocationHistory = typeof userLocationHistory.$inferSelect;
 export type InsertUserLocationHistory = typeof userLocationHistory.$inferInsert;
 export type LocationData = z.infer<typeof locationDataSchema>;
+export type WorkLocation = typeof workLocations.$inferSelect;
+export type InsertWorkLocation = z.infer<typeof workLocationSchema>;
+export type Attendance = typeof attendance.$inferSelect;
+export type InsertAttendance = z.infer<typeof attendanceSchema>;
