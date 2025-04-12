@@ -272,14 +272,14 @@ const AdminAttendancePage = () => {
                 <div className="flex items-center gap-2">
                   <Label htmlFor="userFilter">Filter by User:</Label>
                   <Select 
-                    onValueChange={(value) => setSelectedUserId(parseInt(value))}
-                    value={selectedUserId?.toString() || ""}
+                    onValueChange={(value) => setSelectedUserId(value === "0" ? null : parseInt(value))}
+                    value={selectedUserId?.toString() || "0"}
                   >
                     <SelectTrigger id="userFilter" className="w-[200px]">
                       <SelectValue placeholder="Select a user" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Users</SelectItem>
+                      <SelectItem value="0">All Users</SelectItem>
                       {users.map((user) => (
                         <SelectItem key={user.id} value={user.id.toString()}>
                           {user.username}
@@ -559,7 +559,7 @@ const AdminAttendancePage = () => {
                       </Label>
                       <Select
                         onValueChange={(value) => setAssignLocation({ ...assignLocation, userId: parseInt(value) })}
-                        value={assignLocation.userId ? assignLocation.userId.toString() : ""}
+                        value={assignLocation.userId ? assignLocation.userId.toString() : undefined}
                       >
                         <SelectTrigger id="userId" className="col-span-3">
                           <SelectValue placeholder="Select a user" />
@@ -579,7 +579,7 @@ const AdminAttendancePage = () => {
                       </Label>
                       <Select
                         onValueChange={(value) => setAssignLocation({ ...assignLocation, locationId: parseInt(value) })}
-                        value={assignLocation.locationId ? assignLocation.locationId.toString() : ""}
+                        value={assignLocation.locationId ? assignLocation.locationId.toString() : undefined}
                       >
                         <SelectTrigger id="locationId" className="col-span-3">
                           <SelectValue placeholder="Select a location" />
