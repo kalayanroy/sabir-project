@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { formatDistanceToNow, format, isToday, parseISO } from "date-fns";
-import { Clock, Calendar as CalendarIcon, MapPin, ArrowRight, CheckCircle2, XCircle, AlertCircle, BarChart3, ArrowLeft } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, MapPin, ArrowRight, CheckCircle2, XCircle, AlertCircle, BarChart3, ArrowLeft, RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 
@@ -208,14 +208,40 @@ const AttendancePage = () => {
 
   return (
     <div className="container py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+        <div className="flex items-center mb-4 sm:mb-0">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="mr-2">
+            <Button variant="ghost" size="icon" className="mr-2 hover:bg-muted">
               <ArrowLeft className="h-5 w-5" />
+              <span className="sr-only">Back to Home</span>
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold">Attendance Management</h1>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Attendance Management
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Track your work hours and check attendance history
+            </p>
+          </div>
+        </div>
+        <div className="flex space-x-2 ml-9 sm:ml-0">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/attendance/records"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/attendance/work-locations"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/attendance/stats"] });
+              toast({
+                title: "Data refreshed",
+                description: "Your attendance data has been updated",
+              });
+            }}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
       </div>
       

@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, isToday, parseISO } from "date-fns";
-import { Filter, MapPin, Plus, UserPlus, BarChart3, Calendar as CalendarIcon, User, Users, LayoutGrid, ArrowLeft } from "lucide-react";
+import { Filter, MapPin, Plus, UserPlus, BarChart3, Calendar as CalendarIcon, User, Users, LayoutGrid, ArrowLeft, RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Redirect, Link } from "wouter";
 
@@ -252,18 +252,38 @@ const AdminAttendancePage = () => {
   };
 
   return (
-    <div className="container py-8">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center">
-          <Link href="/admin">
-            <Button variant="ghost" size="icon" className="mr-2">
+    <div className="container py-8 px-4 sm:px-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+        <div className="flex items-center mb-4 sm:mb-0">
+          <Link href="/">
+            <Button variant="ghost" size="icon" className="mr-2 hover:bg-muted">
               <ArrowLeft className="h-5 w-5" />
+              <span className="sr-only">Back to Home</span>
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold">Attendance Administration</h1>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Attendance Administration
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Manage work locations, assignments, and view attendance records
+            </p>
+          </div>
+        </div>
+        <div className="flex space-x-2">
+          <Button variant="outline" size="sm" onClick={() => {
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/attendance/records"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/attendance/work-locations"] });
+            toast({
+              title: "Data refreshed",
+              description: "All attendance data has been updated",
+            });
+          }}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh Data
+          </Button>
         </div>
       </div>
-      <p className="text-muted-foreground mb-6">Manage work locations, assignments, and view attendance records</p>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-4 mb-6">
