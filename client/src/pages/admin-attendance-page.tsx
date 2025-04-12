@@ -80,6 +80,9 @@ const AdminAttendancePage = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
+  const [toDate, setToDate] = useState<Date | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [newLocation, setNewLocation] = useState<NewLocationData>({
     name: "",
     address: "",
