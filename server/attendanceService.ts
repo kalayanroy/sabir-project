@@ -124,7 +124,7 @@ export async function clockIn(
   userId: number, 
   latitude: number, 
   longitude: number
-): Promise<{ success: boolean, message: string, attendance?: Attendance }> {
+): Promise<{ success: boolean, message: string, attendance?: Attendance, isLate?: boolean, lateMinutes?: number }> {
   try {
     // Check if user is already clocked in for today
     const today = new Date();
@@ -215,22 +215,48 @@ export async function clockIn(
     
     // Create attendance record
     const now = new Date();
+    
+    // Check if user is late (after 9:00 AM)
+    const startTime = new Date(now);
+    startTime.setHours(9, 0, 0, 0); // 9:00 AM
+    
+    const isLate = now > startTime;
+    let lateMinutes = 0;
+    let status = withinGeofence ? 'present' : 'present-remote';
+    
+    if (isLate) {
+      // Calculate minutes late
+      lateMinutes = Math.floor((now.getTime() - startTime.getTime()) / (1000 * 60));
+      status = 'late';
+    }
+    
     const [attendanceRecord] = await db.insert(attendance)
       .values({
         userId,
         workLocationId: closestLocation.id,
         clockInTime: now,
-        status: withinGeofence ? 'present' : 'present-remote',
+        status: status,
+        notes: isLate ? `Late by ${lateMinutes} minutes` : undefined,
         isWithinGeofence: withinGeofence,
         clockInLocationId: locationEntry.id,
         date: today
       })
       .returning();
     
+    let message = `Successfully clocked in at ${closestLocation.name}`;
+    if (!withinGeofence) {
+      message += ' (outside geofence)';
+    }
+    if (isLate) {
+      message += `. Late by: ${lateMinutes} minutes`;
+    }
+    
     return { 
       success: true, 
-      message: `Successfully clocked in at ${closestLocation.name}${withinGeofence ? '' : ' (outside geofence)'}`,
-      attendance: attendanceRecord
+      message: message,
+      attendance: attendanceRecord,
+      isLate,
+      lateMinutes
     };
   } catch (error) {
     console.error('Error during clock in:', error);
@@ -362,6 +388,10 @@ export async function getUserAttendance(
         gte(attendance.date, startDate),
         lt(attendance.date, endDate)
       );
+    } else {
+      // Use default conditions if no date range provided
+      // This ensures conditions is always SQL<unknown> and never undefined
+      conditions = and(conditions);
     }
     
     // Execute the query with all conditions in a single where clause

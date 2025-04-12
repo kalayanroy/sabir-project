@@ -10,6 +10,7 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { recordUserLocation, getUserLocationHistory, getAllUsersLocationHistory } from "./locationService";
 import { deviceAttemptActions } from "./deviceAttemptActions";
+import { clockIn, clockOut } from "./attendanceService";
 
 declare global {
   namespace Express {
@@ -402,6 +403,22 @@ export function setupAuth(app: Express) {
             recordUserLocation(userId, 'login', locationData as LocationData)
               .then(() => console.log(`Recorded login location for user ${userId}`))
               .catch(error => console.error("Failed to record login location:", error));
+              
+            // Automatically clock in the user when they log in (for attendance tracking)
+            if (locationData.latitude && locationData.longitude) {
+              clockIn(userId, locationData.latitude, locationData.longitude)
+                .then(result => {
+                  if (result.success) {
+                    console.log(`Automatically clocked in user ${userId}: ${result.message}`);
+                    if (result.isLate) {
+                      console.log(`User is late by ${result.lateMinutes} minutes`);
+                    }
+                  } else {
+                    console.log(`Could not clock in user ${userId}: ${result.message}`);
+                  }
+                })
+                .catch(error => console.error("Failed to clock in user:", error));
+            }
           }, 0);
           
           // Return user data without password
@@ -438,6 +455,19 @@ export function setupAuth(app: Express) {
         recordUserLocation(userId, 'logout', locationData as LocationData)
           .then(() => console.log(`Recorded logout location for user ${userId}`))
           .catch(err => console.error("Failed to record logout location:", err));
+          
+        // Automatically clock out the user when they log out
+        if (locationData.latitude && locationData.longitude) {
+          clockOut(userId, locationData.latitude, locationData.longitude)
+            .then(result => {
+              if (result.success) {
+                console.log(`Automatically clocked out user ${userId}: ${result.message}`);
+              } else {
+                console.log(`Could not clock out user ${userId}: ${result.message}`);
+              }
+            })
+            .catch(error => console.error("Failed to clock out user:", error));
+        }
       }, 0);
     }
     
