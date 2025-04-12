@@ -68,9 +68,9 @@ const AttendancePage = () => {
   const { data: attendanceRecords = [], isLoading: isLoadingRecords } = useQuery<AttendanceRecord[]>({
     queryKey: ["/api/attendance/records"],
     enabled: !!user,
-    onSuccess: (data) => {
+    onSuccess: (data: AttendanceRecord[]) => {
       // Check if user is already clocked in today
-      const todayRecord = data.find(record => 
+      const todayRecord = data.find((record: AttendanceRecord) => 
         isToday(new Date(record.date)) && !record.clockOutTime
       );
       
@@ -338,7 +338,7 @@ const AttendancePage = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {attendanceRecords.slice(0, 5).map((record) => (
+                        {attendanceRecords.slice(0, 5).map((record: AttendanceRecord) => (
                           <TableRow key={record.id}>
                             <TableCell>{formatDate(record.date)}</TableCell>
                             <TableCell>{getLocationName(record.workLocationId)}</TableCell>
@@ -409,14 +409,14 @@ const AttendancePage = () => {
                       </TableHeader>
                       <TableBody>
                         {attendanceRecords
-                          .filter(record => {
+                          .filter((record: AttendanceRecord) => {
                             const recordDate = new Date(record.date);
                             return (
                               recordDate.getMonth() === selectedDate.getMonth() &&
                               recordDate.getFullYear() === selectedDate.getFullYear()
                             );
                           })
-                          .map((record) => (
+                          .map((record: AttendanceRecord) => (
                             <TableRow key={record.id}>
                               <TableCell>{formatDate(record.date)}</TableCell>
                               <TableCell>{getLocationName(record.workLocationId)}</TableCell>
