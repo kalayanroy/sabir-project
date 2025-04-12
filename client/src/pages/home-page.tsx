@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 // Import Map icon separately to avoid conflict with built-in Map object
 import { Map as MapIcon } from "lucide-react";
+// Import Clock icon for attendance pages
+import { Clock, ClipboardList } from "lucide-react";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
