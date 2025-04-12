@@ -65,16 +65,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.error(`User object: ${JSON.stringify(req.user, null, 2)}`);
       console.error(`Username: "${req.user.username}"`);
+      console.error(`Role: "${req.user.role}"`);
       console.error(`Username type: ${typeof req.user.username}`);
       console.error(`Username length: ${req.user.username.length}`);
       console.error(`Is username admin? ${req.user.username === "admin"}`);
-      console.error(`Is username ADMIN? ${req.user.username.toLowerCase() === "admin"}`);
+      console.error(`Is role admin? ${req.user.role === "admin"}`);
       console.error(`Username char codes: ${Array.from(req.user.username).map(c => c.charCodeAt(0))}`);
       console.error("=============================================");
       
       // Check if user is admin with detailed error
-      if (req.user.username !== "admin") {
-        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+      if (req.user.role !== "admin" && req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" and role is "${req.user.role}" (not admin)`);
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
@@ -100,12 +101,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.error(`Username: "${req.user.username}"`);
+      console.error(`Role: "${req.user.role}"`);
       console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error(`Is role admin? ${req.user.role === "admin"}`);
       console.error("=============================================");
       
       // Check if user is admin with detailed error
-      if (req.user.username !== "admin") {
-        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+      if (req.user.role !== "admin" && req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" and role is "${req.user.role}" (not admin)`);
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
@@ -139,12 +142,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.error(`Username: "${req.user.username}"`);
+      console.error(`Role: "${req.user.role}"`);
       console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error(`Is role admin? ${req.user.role === "admin"}`);
       console.error("=============================================");
       
       // Check if user is admin with detailed error
-      if (req.user.username !== "admin") {
-        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+      if (req.user.role !== "admin" && req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" and role is "${req.user.role}" (not admin)`);
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
@@ -261,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Security check - regular users can only view their own history
       // Admin users can view any user's history
-      if (req.user.id !== userId && req.user.username !== "admin") {
+      if (req.user.id !== userId && req.user.role !== "admin" && req.user.username !== "admin") {
         return res.status(403).json({ message: "Forbidden: You can only view your own login history" });
       }
       
@@ -288,12 +293,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.error(`Username: "${req.user.username}"`);
+      console.error(`Role: "${req.user.role}"`);
       console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error(`Is role admin? ${req.user.role === "admin"}`);
       console.error("=============================================");
       
       // Check if user is admin with detailed error
-      if (req.user.username !== "admin") {
-        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+      if (req.user.role !== "admin" && req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" and role is "${req.user.role}" (not admin)`);
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
@@ -325,12 +332,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.error(`Username: "${req.user.username}"`);
+      console.error(`Role: "${req.user.role}"`);
       console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error(`Is role admin? ${req.user.role === "admin"}`);
       console.error("=============================================");
       
       // Check if user is admin with detailed error
-      if (req.user.username !== "admin") {
-        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+      if (req.user.role !== "admin" && req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" and role is "${req.user.role}" (not admin)`);
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
