@@ -168,8 +168,35 @@ export default function HomePage() {
                       </a>
                     </Button>
                   </li>
+                  <li>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start font-normal" 
+                      asChild
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <a href="/admin-attendance" className="flex items-center">
+                        <ClipboardList className="mr-3 h-5 w-5 text-purple-500" />
+                        Attendance Admin
+                      </a>
+                    </Button>
+                  </li>
                 </>
               )}
+              
+              <li>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start font-normal" 
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <a href="/attendance" className="flex items-center">
+                    <Clock className="mr-3 h-5 w-5 text-emerald-500" />
+                    Attendance
+                  </a>
+                </Button>
+              </li>
               <li>
                 <Button 
                   variant="ghost" 
@@ -265,8 +292,25 @@ export default function HomePage() {
                         </a>
                       </Button>
                     </li>
+                    <li>
+                      <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                        <a href="/admin-attendance" className="flex items-center">
+                          <ClipboardList className="mr-3 h-5 w-5 text-purple-500" />
+                          Attendance Admin
+                        </a>
+                      </Button>
+                    </li>
                   </>
                 )}
+                
+                <li>
+                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                    <a href="/attendance" className="flex items-center">
+                      <Clock className="mr-3 h-5 w-5 text-emerald-500" />
+                      Attendance
+                    </a>
+                  </Button>
+                </li>
                 <li>
                   <Button variant="ghost" className="w-full justify-start font-normal" asChild>
                     <a href="/profile" className="flex items-center">
@@ -301,7 +345,7 @@ export default function HomePage() {
           <div className="container mx-auto">
             <h2 className="text-2xl font-medium mb-6">Welcome Back, {user.username}!</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-start">
@@ -334,6 +378,26 @@ export default function HomePage() {
                       <Button variant="link" className="p-0 h-auto flex items-center text-primary" asChild>
                         <a href="/security">
                           <span>Manage Security</span>
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-start">
+                    <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center mr-4">
+                      <Clock className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Attendance</h3>
+                      <p className="text-muted-foreground mb-4">Track your work hours and attendance records</p>
+                      <Button variant="link" className="p-0 h-auto flex items-center text-primary" asChild>
+                        <a href="/attendance">
+                          <span>Manage Attendance</span>
                           <ChevronRight className="ml-1 h-4 w-4" />
                         </a>
                       </Button>
@@ -449,6 +513,24 @@ export default function HomePage() {
                         <a href="/location-manager" className="flex items-center">
                           <MapIcon className="mr-2 h-4 w-4" />
                           Go to Location Manager
+                        </a>
+                      </Button>
+                    </div>
+                    
+                    <div className="bg-purple-50 p-4 rounded-md border border-purple-100">
+                      <h4 className="font-medium mb-2 text-purple-800">Attendance Management</h4>
+                      <p className="text-sm text-purple-700 mb-4">
+                        Manage work locations, track employee attendance, and generate attendance reports.
+                        Set up geofencing and monitor employee work hours.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="bg-white border-purple-200 text-purple-700 hover:bg-purple-50"
+                        asChild
+                      >
+                        <a href="/admin-attendance" className="flex items-center">
+                          <ClipboardList className="mr-2 h-4 w-4" />
+                          Go to Attendance Admin
                         </a>
                       </Button>
                     </div>
