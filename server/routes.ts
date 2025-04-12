@@ -32,12 +32,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.error(`Username: "${req.user.username}"`);
+      console.error(`Role: "${req.user.role}"`);
       console.error(`Is username admin? ${req.user.username === "admin"}`);
+      console.error(`Is role admin? ${req.user.role === "admin"}`);
       console.error("=============================================");
       
       // Check if user is admin with detailed error
-      if (req.user.username !== "admin") {
-        console.error(`Admin check failed - username is "${req.user.username}" not "admin"`);
+      if (req.user.role !== "admin" && req.user.username !== "admin") {
+        console.error(`Admin check failed - username is "${req.user.username}" and role is "${req.user.role}" (not admin)`);
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
 
@@ -487,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all attendance records (admin only)
   app.get("/api/admin/attendance/records", async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated() || req.user.username !== "admin") {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
@@ -513,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user statistics (admin only)
   app.get("/api/admin/attendance/user-stats/:userId", async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated() || req.user.username !== "admin") {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
@@ -543,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new work location (admin only)
   app.post("/api/admin/attendance/work-locations", async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated() || req.user.username !== "admin") {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
@@ -590,7 +592,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Assign user to work location (admin only)
   app.post("/api/admin/attendance/assign-location", async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated() || req.user.username !== "admin") {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
