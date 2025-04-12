@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { formatDistanceToNow, format, isToday, parseISO } from "date-fns";
-import { Clock, Calendar as CalendarIcon, MapPin, ArrowRight, CheckCircle2, XCircle, AlertCircle, BarChart3 } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, MapPin, ArrowRight, CheckCircle2, XCircle, AlertCircle, BarChart3, ArrowLeft } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 
 // Define types
 type WorkLocation = {
@@ -207,7 +208,16 @@ const AttendancePage = () => {
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-6">Attendance Management</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Link href="/">
+            <Button variant="ghost" size="icon" className="mr-2">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold">Attendance Management</h1>
+        </div>
+      </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-3 mb-6">

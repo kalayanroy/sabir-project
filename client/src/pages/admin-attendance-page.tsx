@@ -16,9 +16,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, isToday, parseISO } from "date-fns";
-import { Filter, MapPin, Plus, UserPlus, BarChart3, Calendar as CalendarIcon, User, Users, LayoutGrid } from "lucide-react";
+import { Filter, MapPin, Plus, UserPlus, BarChart3, Calendar as CalendarIcon, User, Users, LayoutGrid, ArrowLeft } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 
 // Define types
 type WorkLocation = {
@@ -253,7 +253,16 @@ const AdminAttendancePage = () => {
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-2">Attendance Administration</h1>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center">
+          <Link href="/admin">
+            <Button variant="ghost" size="icon" className="mr-2">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold">Attendance Administration</h1>
+        </div>
+      </div>
       <p className="text-muted-foreground mb-6">Manage work locations, assignments, and view attendance records</p>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
