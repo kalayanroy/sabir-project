@@ -574,7 +574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all work locations (admin only)
   app.get("/api/admin/attendance/work-locations", async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated() || req.user.username !== "admin") {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
         return res.status(403).json({ message: "Unauthorized access - not admin" });
       }
       
