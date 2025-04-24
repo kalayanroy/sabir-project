@@ -138,7 +138,8 @@ const AdminLeavePage = () => {
     name: "",
     description: "",
     allowedDays: 0,
-    color: "#3B82F6"
+    color: "#3B82F6",
+    requiresApproval: true
   });
   const [isAddLeaveTypeOpen, setIsAddLeaveTypeOpen] = useState(false);
   const [isEditLeaveTypeOpen, setIsEditLeaveTypeOpen] = useState(false);
@@ -285,7 +286,8 @@ const AdminLeavePage = () => {
         name: "",
         description: "",
         allowedDays: 0,
-        color: "#3B82F6"
+        color: "#3B82F6",
+        requiresApproval: true
       });
       setIsAddLeaveTypeOpen(false);
       // Refresh data
@@ -1270,14 +1272,18 @@ const AdminLeavePage = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2 mt-2">
-              <Checkbox 
-                id="edit-requires-approval" 
-                checked={editingLeaveType?.requiresApproval ?? true}
-                onCheckedChange={(checked) => setEditingLeaveType(prev => 
-                  prev ? {...prev, requiresApproval: !!checked} : null
-                )}
-              />
-              <Label htmlFor="edit-requires-approval">Requires manager approval</Label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="edit-requires-approval"
+                  checked={editingLeaveType?.requiresApproval ?? true}
+                  onChange={(e) => setEditingLeaveType(prev =>
+                    prev ? {...prev, requiresApproval: e.target.checked} : null
+                  )}
+                  className="w-4 h-4 rounded-sm border border-primary focus:ring-2 focus:ring-primary"
+                />
+                <Label htmlFor="edit-requires-approval">Requires manager approval</Label>
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -1369,6 +1375,21 @@ const AdminLeavePage = () => {
                     {newLeaveType.name || 'Leave Type Preview'}
                   </span>
                 </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 mt-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="leave-requires-approval"
+                  checked={newLeaveType.requiresApproval}
+                  onChange={(e) => setNewLeaveType({
+                    ...newLeaveType,
+                    requiresApproval: e.target.checked
+                  })}
+                  className="w-4 h-4 rounded-sm border border-primary focus:ring-2 focus:ring-primary"
+                />
+                <Label htmlFor="leave-requires-approval">Requires manager approval</Label>
               </div>
             </div>
           </div>
