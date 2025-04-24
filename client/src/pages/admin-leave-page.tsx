@@ -867,6 +867,7 @@ const AdminLeavePage = () => {
                       <TableHead>Default Days</TableHead>
                       <TableHead>Color</TableHead>
                       <TableHead>Requires Approval</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
