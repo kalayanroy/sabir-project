@@ -13,6 +13,8 @@ import SecuritySettingsPage from "@/pages/security-settings-page";
 import HelpPage from "@/pages/help-page";
 import AttendancePage from "@/pages/attendance-page";
 import AdminAttendancePage from "@/pages/admin-attendance-page";
+import LeavePage from "@/pages/leave-page";
+import AdminLeavePage from "@/pages/admin-leave-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 
@@ -25,6 +27,8 @@ function Router() {
       <ProtectedRoute path="/location-manager" component={LocationManagerPage} />
       <ProtectedRoute path="/attendance" component={AttendancePage} />
       <ProtectedRoute path="/admin-attendance" component={AdminAttendancePage} />
+      <ProtectedRoute path="/leave" component={LeavePage} />
+      <ProtectedRoute path="/admin-leave" component={AdminLeavePage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/security" component={SecuritySettingsPage} />
       <ProtectedRoute path="/help" component={HelpPage} />
