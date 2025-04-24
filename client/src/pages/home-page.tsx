@@ -21,7 +21,7 @@ import {
 // Import Map icon separately to avoid conflict with built-in Map object
 import { Map as MapIcon } from "lucide-react";
 // Import Clock icon for attendance pages
-import { Clock, ClipboardList } from "lucide-react";
+import { Clock, ClipboardList, Calendar } from "lucide-react";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
@@ -204,6 +204,34 @@ export default function HomePage() {
                   asChild
                   onClick={() => setMobileMenuOpen(false)}
                 >
+                  <a href="/leave" className="flex items-center">
+                    <Calendar className="mr-3 h-5 w-5 text-amber-500" />
+                    Leave Management
+                  </a>
+                </Button>
+              </li>
+              {(user.username === "admin1" || user.username === "admin") && (
+                <li>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start font-normal" 
+                    asChild
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <a href="/admin-leave" className="flex items-center">
+                      <Calendar className="mr-3 h-5 w-5 text-orange-500" />
+                      Leave Admin
+                    </a>
+                  </Button>
+                </li>
+              )}
+              <li>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start font-normal" 
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   <a href="/profile" className="flex items-center">
                     <Edit className="mr-3 h-5 w-5 text-muted-foreground" />
                     Profile
@@ -313,6 +341,24 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                    <a href="/leave" className="flex items-center">
+                      <Calendar className="mr-3 h-5 w-5 text-amber-500" />
+                      Leave Management
+                    </a>
+                  </Button>
+                </li>
+                {(user.username === "admin1" || user.username === "admin") && (
+                  <li>
+                    <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                      <a href="/admin-leave" className="flex items-center">
+                        <Calendar className="mr-3 h-5 w-5 text-orange-500" />
+                        Leave Admin
+                      </a>
+                    </Button>
+                  </li>
+                )}
+                <li>
+                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
                     <a href="/profile" className="flex items-center">
                       <Edit className="mr-3 h-5 w-5 text-muted-foreground" />
                       Profile
@@ -345,7 +391,7 @@ export default function HomePage() {
           <div className="container mx-auto">
             <h2 className="text-2xl font-medium mb-6">Welcome Back, {user.username}!</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-start">
@@ -398,6 +444,26 @@ export default function HomePage() {
                       <Button variant="link" className="p-0 h-auto flex items-center text-primary" asChild>
                         <a href="/attendance">
                           <span>Manage Attendance</span>
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-start">
+                    <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center mr-4">
+                      <Calendar className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Leave Management</h3>
+                      <p className="text-muted-foreground mb-4">Request and track time off from work</p>
+                      <Button variant="link" className="p-0 h-auto flex items-center text-primary" asChild>
+                        <a href="/leave">
+                          <span>Request Leave</span>
                           <ChevronRight className="ml-1 h-4 w-4" />
                         </a>
                       </Button>
@@ -535,9 +601,27 @@ export default function HomePage() {
                       </Button>
                     </div>
                     
-                    <div className="rounded-md bg-amber-50 p-4 border border-amber-100">
-                      <h4 className="font-medium mb-2 text-amber-800">Security Notice</h4>
-                      <p className="text-sm text-amber-700">
+                    <div className="bg-amber-50 p-4 rounded-md border border-amber-100">
+                      <h4 className="font-medium mb-2 text-amber-800">Leave Management</h4>
+                      <p className="text-sm text-amber-700 mb-4">
+                        Review, approve, and manage employee leave requests. Create and configure leave types
+                        and manage leave balances for all employees.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="bg-white border-amber-200 text-amber-700 hover:bg-amber-50"
+                        asChild
+                      >
+                        <a href="/admin-leave" className="flex items-center">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Go to Leave Admin
+                        </a>
+                      </Button>
+                    </div>
+                    
+                    <div className="rounded-md bg-gray-50 p-4 border border-gray-100">
+                      <h4 className="font-medium mb-2 text-gray-800">Security Notice</h4>
+                      <p className="text-sm text-gray-700">
                         Remember that only administrators should have access to the management consoles. 
                         Do not share your admin credentials with others.
                       </p>
