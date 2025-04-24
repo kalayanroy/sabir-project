@@ -145,5 +145,71 @@ export type InsertUserLocationHistory = typeof userLocationHistory.$inferInsert;
 export type LocationData = z.infer<typeof locationDataSchema>;
 export type WorkLocation = typeof workLocations.$inferSelect;
 export type InsertWorkLocation = z.infer<typeof workLocationSchema>;
+// Leave Management System tables
+export const leaveTypes = pgTable("leaveTypes", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  allowedDays: integer("allowedDays").notNull(),
+  requiresApproval: boolean("requiresApproval").default(true),
+  color: text("color").default("#3B82F6"), // Default blue color for UI representation
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export const leaveBalances = pgTable("leaveBalances", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  leaveTypeId: integer("leaveTypeId").notNull(),
+  year: integer("year").notNull(), // Leave balance for specific year
+  totalDays: integer("totalDays").notNull(),
+  usedDays: integer("usedDays").default(0),
+  pendingDays: integer("pendingDays").default(0), // Days in pending requests
+  updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
+export const leaveRequests = pgTable("leaveRequests", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  leaveTypeId: integer("leaveTypeId").notNull(),
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  totalDays: doublePrecision("totalDays").notNull(),
+  reason: text("reason"),
+  status: text("status").default("pending"), // 'pending', 'approved', 'rejected', 'cancelled'
+  approvedById: integer("approvedById"), // Admin/manager who approved the request
+  approvedAt: timestamp("approvedAt"),
+  rejectionReason: text("rejectionReason"),
+  attachmentUrl: text("attachmentUrl"), // For medical certificates, etc.
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
+// Schemas for leave management tables
+export const leaveTypeSchema = createInsertSchema(leaveTypes)
+  .extend({
+    name: z.string().min(1, "Leave type name is required"),
+    allowedDays: z.number().min(0, "Allowed days cannot be negative"),
+  });
+
+export const leaveBalanceSchema = createInsertSchema(leaveBalances)
+  .extend({
+    year: z.number().min(2000).max(2100),
+    totalDays: z.number().min(0, "Total days cannot be negative"),
+  });
+
+export const leaveRequestSchema = createInsertSchema(leaveRequests)
+  .extend({
+    startDate: z.date().or(z.string().datetime()),
+    endDate: z.date().or(z.string().datetime()),
+    status: z.enum(["pending", "approved", "rejected", "cancelled"]).default("pending"),
+    totalDays: z.number().min(0.5, "Leave must be at least half a day"),
+  });
+
 export type Attendance = typeof attendance.$inferSelect;
 export type InsertAttendance = z.infer<typeof attendanceSchema>;
+export type LeaveType = typeof leaveTypes.$inferSelect;
+export type InsertLeaveType = z.infer<typeof leaveTypeSchema>;
+export type LeaveBalance = typeof leaveBalances.$inferSelect;
+export type InsertLeaveBalance = z.infer<typeof leaveBalanceSchema>;
+export type LeaveRequest = typeof leaveRequests.$inferSelect;
+export type InsertLeaveRequest = z.infer<typeof leaveRequestSchema>;

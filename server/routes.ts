@@ -14,6 +14,22 @@ import {
   getUserWorkStats,
   assignUserToWorkLocation
 } from "./attendanceService";
+import {
+  getAllLeaveTypes,
+  createLeaveType,
+  updateLeaveType,
+  deleteLeaveType,
+  getUserLeaveBalances,
+  initializeUserLeaveBalances,
+  updateLeaveBalance,
+  createLeaveRequest,
+  getUserLeaveRequests,
+  getAllLeaveRequests,
+  approveLeaveRequest,
+  rejectLeaveRequest,
+  cancelLeaveRequest,
+  getLeaveSummary
+} from "./leaveService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -626,6 +642,315 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error assigning user to work location:", error);
       res.status(500).json({ message: "Failed to assign user to work location" });
+    }
+  });
+
+  // ============ LEAVE MANAGEMENT API ROUTES ============
+
+  // Get all leave types
+  app.get("/api/leave/types", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const leaveTypes = await getAllLeaveTypes();
+      res.json(leaveTypes);
+    } catch (error) {
+      console.error("Error fetching leave types:", error);
+      res.status(500).json({ message: "Failed to fetch leave types" });
+    }
+  });
+  
+  // Create a new leave type (admin only)
+  app.post("/api/admin/leave/types", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const leaveType = await createLeaveType(req.body);
+      res.status(201).json(leaveType);
+    } catch (error) {
+      console.error("Error creating leave type:", error);
+      res.status(500).json({ message: "Failed to create leave type" });
+    }
+  });
+  
+  // Update a leave type (admin only)
+  app.put("/api/admin/leave/types/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const id = parseInt(req.params.id, 10);
+      const updatedLeaveType = await updateLeaveType(id, req.body);
+      
+      if (!updatedLeaveType) {
+        return res.status(404).json({ message: "Leave type not found" });
+      }
+      
+      res.json(updatedLeaveType);
+    } catch (error) {
+      console.error("Error updating leave type:", error);
+      res.status(500).json({ message: "Failed to update leave type" });
+    }
+  });
+  
+  // Delete a leave type (admin only)
+  app.delete("/api/admin/leave/types/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const id = parseInt(req.params.id, 10);
+      
+      try {
+        await deleteLeaveType(id);
+        res.json({ success: true, message: "Leave type deleted successfully" });
+      } catch (error: any) {
+        res.status(400).json({ message: error.message });
+      }
+    } catch (error) {
+      console.error("Error deleting leave type:", error);
+      res.status(500).json({ message: "Failed to delete leave type" });
+    }
+  });
+  
+  // Get user's leave balances
+  app.get("/api/leave/balances", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const year = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear();
+      const balances = await getUserLeaveBalances(req.user.id, year);
+      
+      // If no balances exist, initialize them
+      if (balances.length === 0) {
+        await initializeUserLeaveBalances(req.user.id, year);
+        const newBalances = await getUserLeaveBalances(req.user.id, year);
+        return res.json(newBalances);
+      }
+      
+      res.json(balances);
+    } catch (error) {
+      console.error("Error fetching leave balances:", error);
+      res.status(500).json({ message: "Failed to fetch leave balances" });
+    }
+  });
+  
+  // Get all users leave balances (admin only)
+  app.get("/api/admin/leave/balances/:userId", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const userId = parseInt(req.params.userId, 10);
+      const year = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear();
+      
+      const balances = await getUserLeaveBalances(userId, year);
+      res.json(balances);
+    } catch (error) {
+      console.error("Error fetching user leave balances:", error);
+      res.status(500).json({ message: "Failed to fetch user leave balances" });
+    }
+  });
+  
+  // Update leave balance (admin only)
+  app.put("/api/admin/leave/balances/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const id = parseInt(req.params.id, 10);
+      const updatedBalance = await updateLeaveBalance(id, req.body);
+      
+      if (!updatedBalance) {
+        return res.status(404).json({ message: "Leave balance not found" });
+      }
+      
+      res.json(updatedBalance);
+    } catch (error) {
+      console.error("Error updating leave balance:", error);
+      res.status(500).json({ message: "Failed to update leave balance" });
+    }
+  });
+  
+  // Initialize leave balance for a user (admin only)
+  app.post("/api/admin/leave/balances/initialize/:userId", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const userId = parseInt(req.params.userId, 10);
+      const year = req.body.year || new Date().getFullYear();
+      
+      const balances = await initializeUserLeaveBalances(userId, year);
+      res.json(balances);
+    } catch (error) {
+      console.error("Error initializing leave balances:", error);
+      res.status(500).json({ message: "Failed to initialize leave balances" });
+    }
+  });
+  
+  // Create a leave request
+  app.post("/api/leave/requests", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const leaveData = {
+        ...req.body,
+        userId: req.user.id
+      };
+      
+      const result = await createLeaveRequest(leaveData);
+      
+      if (!result.success) {
+        return res.status(400).json({ message: result.message });
+      }
+      
+      res.status(201).json({ 
+        success: true, 
+        message: result.message,
+        request: result.request
+      });
+    } catch (error) {
+      console.error("Error creating leave request:", error);
+      res.status(500).json({ message: "Failed to create leave request" });
+    }
+  });
+  
+  // Get user's leave requests
+  app.get("/api/leave/requests", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const status = req.query.status as string | undefined;
+      const leaveRequests = await getUserLeaveRequests(req.user.id, status);
+      res.json(leaveRequests);
+    } catch (error) {
+      console.error("Error fetching leave requests:", error);
+      res.status(500).json({ message: "Failed to fetch leave requests" });
+    }
+  });
+  
+  // Get all leave requests (admin only)
+  app.get("/api/admin/leave/requests", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const status = req.query.status as string | undefined;
+      const leaveRequests = await getAllLeaveRequests(status);
+      res.json(leaveRequests);
+    } catch (error) {
+      console.error("Error fetching all leave requests:", error);
+      res.status(500).json({ message: "Failed to fetch leave requests" });
+    }
+  });
+  
+  // Approve a leave request (admin only)
+  app.post("/api/admin/leave/requests/:id/approve", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const id = parseInt(req.params.id, 10);
+      const result = await approveLeaveRequest(id, req.user.id);
+      
+      if (!result.success) {
+        return res.status(400).json({ message: result.message });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: result.message,
+        request: result.request
+      });
+    } catch (error) {
+      console.error("Error approving leave request:", error);
+      res.status(500).json({ message: "Failed to approve leave request" });
+    }
+  });
+  
+  // Reject a leave request (admin only)
+  app.post("/api/admin/leave/requests/:id/reject", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const id = parseInt(req.params.id, 10);
+      const { reason } = req.body;
+      
+      const result = await rejectLeaveRequest(id, req.user.id, reason);
+      
+      if (!result.success) {
+        return res.status(400).json({ message: result.message });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: result.message,
+        request: result.request
+      });
+    } catch (error) {
+      console.error("Error rejecting leave request:", error);
+      res.status(500).json({ message: "Failed to reject leave request" });
+    }
+  });
+  
+  // Cancel a leave request
+  app.post("/api/leave/requests/:id/cancel", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const id = parseInt(req.params.id, 10);
+      const result = await cancelLeaveRequest(id, req.user.id);
+      
+      if (!result.success) {
+        return res.status(400).json({ message: result.message });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: result.message,
+        request: result.request
+      });
+    } catch (error) {
+      console.error("Error cancelling leave request:", error);
+      res.status(500).json({ message: "Failed to cancel leave request" });
+    }
+  });
+  
+  // Get leave summary statistics (admin only)
+  app.get("/api/admin/leave/summary", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const year = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear();
+      const summary = await getLeaveSummary(year);
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching leave summary:", error);
+      res.status(500).json({ message: "Failed to fetch leave summary" });
     }
   });
 
