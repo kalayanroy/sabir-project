@@ -141,6 +141,8 @@ const AdminLeavePage = () => {
     color: "#3B82F6"
   });
   const [isAddLeaveTypeOpen, setIsAddLeaveTypeOpen] = useState(false);
+  const [isEditLeaveTypeOpen, setIsEditLeaveTypeOpen] = useState(false);
+  const [editingLeaveType, setEditingLeaveType] = useState<LeaveType | null>(null);
   
   // Redirect if not admin
   if (!user || (user.role !== "admin" && user.username !== "admin")) {
@@ -369,9 +371,81 @@ const AdminLeavePage = () => {
     }
   };
 
+  // Update leave type mutation
+  const updateLeaveTypeMutation = useMutation({
+    mutationFn: async (data: LeaveType) => {
+      const res = await apiRequest("PUT", `/api/admin/leave/types/${data.id}`, {
+        name: data.name,
+        description: data.description,
+        allowedDays: parseInt(data.allowedDays.toString()),
+        color: data.color,
+        requiresApproval: data.requiresApproval
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Leave Type Updated",
+        description: "The leave type has been successfully updated",
+      });
+      setEditingLeaveType(null);
+      setIsEditLeaveTypeOpen(false);
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/leave/types"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Update Leave Type",
+        description: error.message || "Please try again later",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete leave type mutation
+  const deleteLeaveTypeMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/admin/leave/types/${id}`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Leave Type Deleted",
+        description: "The leave type has been successfully deleted",
+      });
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/leave/types"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Delete Leave Type",
+        description: error.message || "The leave type may be in use by leave requests or balances",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Handle create leave type
   const handleCreateLeaveType = () => {
     createLeaveTypeMutation.mutate(newLeaveType);
+  };
+
+  // Handle edit leave type (open dialog)
+  const handleEditLeaveType = (leaveType: LeaveType) => {
+    setEditingLeaveType({...leaveType});
+    setIsEditLeaveTypeOpen(true);
+  };
+
+  // Handle update leave type
+  const handleUpdateLeaveType = () => {
+    if (editingLeaveType) {
+      updateLeaveTypeMutation.mutate(editingLeaveType);
+    }
+  };
+
+  // Handle delete leave type
+  const handleDeleteLeaveType = (id: number) => {
+    deleteLeaveTypeMutation.mutate(id);
   };
 
   // Handle initialize balances
@@ -891,6 +965,53 @@ const AdminLeavePage = () => {
                             <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">No</Badge>
                           )}
                         </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditLeaveType(type)}
+                            >
+                              Edit
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-500 border-red-200 hover:bg-red-50"
+                                >
+                                  Delete
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Leave Type</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete the "{type.name}" leave type? This action cannot be undone.
+                                    If this leave type is already in use, it cannot be deleted.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteLeaveType(type.id)}
+                                    className="bg-red-500 hover:bg-red-600"
+                                  >
+                                    {deleteLeaveTypeMutation.isPending && deleteLeaveTypeMutation.variables === type.id ? (
+                                      <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        Deleting...
+                                      </>
+                                    ) : (
+                                      "Delete"
+                                    )}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1067,6 +1188,116 @@ const AdminLeavePage = () => {
                 </>
               ) : (
                 <>Reject Request</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Leave Type Dialog */}
+      <Dialog open={isEditLeaveTypeOpen} onOpenChange={setIsEditLeaveTypeOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Leave Type</DialogTitle>
+            <DialogDescription>
+              Update the selected leave type's details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div>
+              <Label htmlFor="edit-leave-name">Leave Type Name</Label>
+              <Input 
+                id="edit-leave-name"
+                placeholder="e.g., Study Leave"
+                value={editingLeaveType?.name || ""}
+                onChange={(e) => setEditingLeaveType(prev => 
+                  prev ? {...prev, name: e.target.value} : null
+                )}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-leave-desc">Description</Label>
+              <Textarea 
+                id="edit-leave-desc"
+                placeholder="Leave description"
+                value={editingLeaveType?.description || ""}
+                onChange={(e) => setEditingLeaveType(prev => 
+                  prev ? {...prev, description: e.target.value} : null
+                )}
+                className="mt-1"
+                rows={2}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-leave-days">Default Allowed Days (per year)</Label>
+              <Input 
+                id="edit-leave-days"
+                type="number"
+                min="0"
+                max="365"
+                placeholder="e.g., 10"
+                value={editingLeaveType?.allowedDays || ""}
+                onChange={(e) => setEditingLeaveType(prev => 
+                  prev ? {...prev, allowedDays: e.target.value ? parseInt(e.target.value) : 0} : null
+                )}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-leave-color">Color</Label>
+              <div className="flex gap-2 mt-1">
+                <Input 
+                  id="edit-leave-color"
+                  type="color"
+                  value={editingLeaveType?.color || "#3B82F6"}
+                  onChange={(e) => setEditingLeaveType(prev => 
+                    prev ? {...prev, color: e.target.value} : null
+                  )}
+                  className="w-12 h-9 p-1"
+                />
+                <div 
+                  className="flex-1 rounded-md border flex items-center px-3"
+                  style={{ 
+                    backgroundColor: `${editingLeaveType?.color || "#3B82F6"}20`, 
+                    borderColor: editingLeaveType?.color || "#3B82F6" 
+                  }}
+                >
+                  <span style={{ color: editingLeaveType?.color || "#3B82F6" }}>
+                    {editingLeaveType?.name || 'Leave Type Preview'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 mt-2">
+              <Checkbox 
+                id="edit-requires-approval" 
+                checked={editingLeaveType?.requiresApproval ?? true}
+                onCheckedChange={(checked) => setEditingLeaveType(prev => 
+                  prev ? {...prev, requiresApproval: !!checked} : null
+                )}
+              />
+              <Label htmlFor="edit-requires-approval">Requires manager approval</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditLeaveTypeOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdateLeaveType}
+              disabled={!editingLeaveType?.name || updateLeaveTypeMutation.isPending}
+            >
+              {updateLeaveTypeMutation.isPending ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>Save Changes</>
               )}
             </Button>
           </DialogFooter>
