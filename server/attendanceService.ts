@@ -445,38 +445,47 @@ export async function getAllAttendance(
   limit: number = 100
 ): Promise<any[]> {
   try {
-    // Build the query with all relevant joins
-    let query = db.select({
-      id: attendance.id,
-      userId: attendance.userId,
-      workLocationId: attendance.workLocationId,
-      date: attendance.date,
-      clockInTime: attendance.clockInTime,
-      clockOutTime: attendance.clockOutTime,
-      status: attendance.status,
-      isWithinGeofence: attendance.isWithinGeofence,
-      totalHours: attendance.totalHours,
-      userName: users.username,
-      userEmail: users.email,
-      locationName: workLocations.name,
-      locationAddress: workLocations.address
-    })
-    .from(attendance)
-    .leftJoin(users, eq(attendance.userId, users.id))
-    .leftJoin(workLocations, eq(attendance.workLocationId, workLocations.id));
+    // Create a base query with filtering
+    let baseQuery;
     
-    // If we have a date range, use it for filtering
     if (startDate && endDate) {
-      query = query.where(and(
-        gte(attendance.date, startDate),
-        lt(attendance.date, endDate)
-      ));
+      baseQuery = db.select()
+        .from(attendance)
+        .where(and(
+          gte(attendance.date, startDate),
+          lt(attendance.date, endDate)
+        ));
+    } else {
+      baseQuery = db.select().from(attendance);
     }
     
-    // Execute the query with order by and limit
-    return await query
+    // Execute the core query first to get attendance records
+    const records = await baseQuery
       .orderBy(sql`${attendance.date} DESC`)
       .limit(limit);
+      
+    // Now enhance the records with user and location data
+    const enhancedRecords = await Promise.all(records.map(async (record) => {
+      // Get user data
+      const [userData] = record.userId ? 
+        await db.select().from(users).where(eq(users.id, record.userId)) : 
+        [];
+        
+      // Get location data
+      const [locationData] = record.workLocationId ?
+        await db.select().from(workLocations).where(eq(workLocations.id, record.workLocationId)) :
+        [];
+        
+      return {
+        ...record,
+        userName: userData?.username,
+        userEmail: userData?.email,
+        locationName: locationData?.name,
+        locationAddress: locationData?.address
+      };
+    }));
+    
+    return enhancedRecords;
   } catch (error) {
     console.error('Error fetching all attendance records:', error);
     return [];
