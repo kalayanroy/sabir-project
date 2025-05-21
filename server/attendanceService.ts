@@ -86,6 +86,33 @@ export async function createWorkLocation(location: Omit<WorkLocation, 'id' | 'cr
 }
 
 /**
+ * Get all user-location assignments
+ */
+export async function getAllUserLocationAssignments(): Promise<any[]> {
+  try {
+    const assignments = await db
+      .select({
+        id: userWorkLocations.id,
+        userId: userWorkLocations.userId,
+        locationId: userWorkLocations.locationId,
+        assignedAt: userWorkLocations.assignedAt,
+        userName: users.username,
+        userEmail: users.email,
+        locationName: workLocations.name,
+        locationAddress: workLocations.address
+      })
+      .from(userWorkLocations)
+      .innerJoin(users, eq(userWorkLocations.userId, users.id))
+      .innerJoin(workLocations, eq(userWorkLocations.locationId, workLocations.id));
+    
+    return assignments;
+  } catch (error) {
+    console.error('Error getting user location assignments:', error);
+    return [];
+  }
+}
+
+/**
  * Assign a user to a work location
  */
 export async function assignUserToWorkLocation(userId: number, locationId: number): Promise<boolean> {
