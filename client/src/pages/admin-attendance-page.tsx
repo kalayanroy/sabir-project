@@ -115,6 +115,12 @@ const AdminAttendancePage = () => {
     queryKey: ["/api/admin/attendance/work-locations"],
     enabled: !!user && user.role === "admin",
   });
+  
+  // Get all user assignments
+  const { data: userAssignments = [], isLoading: isLoadingAssignments } = useQuery<any[]>({
+    queryKey: ["/api/admin/attendance/user-assignments"],
+    enabled: !!user && user.role === "admin",
+  });
 
   // Get all attendance records
   const { data: attendanceRecords = [], isLoading: isLoadingRecords } = useQuery<AttendanceRecord[]>({

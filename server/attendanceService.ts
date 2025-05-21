@@ -4,6 +4,7 @@ import {
   workLocations, 
   userWorkLocations,
   userLocationHistory,
+  users,
   Attendance,
   WorkLocation,
   InsertAttendance
