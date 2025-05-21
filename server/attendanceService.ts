@@ -443,23 +443,38 @@ export async function getAllAttendance(
   startDate?: Date, 
   endDate?: Date,
   limit: number = 100
-): Promise<Attendance[]> {
+): Promise<any[]> {
   try {
+    // Build the query with all relevant joins
+    let query = db.select({
+      id: attendance.id,
+      userId: attendance.userId,
+      workLocationId: attendance.workLocationId,
+      date: attendance.date,
+      clockInTime: attendance.clockInTime,
+      clockOutTime: attendance.clockOutTime,
+      status: attendance.status,
+      isWithinGeofence: attendance.isWithinGeofence,
+      totalHours: attendance.totalHours,
+      userName: users.username,
+      userEmail: users.email,
+      locationName: workLocations.name,
+      locationAddress: workLocations.address
+    })
+    .from(attendance)
+    .leftJoin(users, eq(attendance.userId, users.id))
+    .leftJoin(workLocations, eq(attendance.workLocationId, workLocations.id));
+    
     // If we have a date range, use it for filtering
     if (startDate && endDate) {
-      return await db.select()
-        .from(attendance)
-        .where(and(
-          gte(attendance.date, startDate),
-          lt(attendance.date, endDate)
-        ))
-        .orderBy(sql`${attendance.date} DESC`)
-        .limit(limit);
+      query = query.where(and(
+        gte(attendance.date, startDate),
+        lt(attendance.date, endDate)
+      ));
     }
     
-    // Otherwise just return all records with a limit
-    return await db.select()
-      .from(attendance)
+    // Execute the query with order by and limit
+    return await query
       .orderBy(sql`${attendance.date} DESC`)
       .limit(limit);
   } catch (error) {

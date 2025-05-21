@@ -42,6 +42,11 @@ type AttendanceRecord = {
   notes?: string;
   isWithinGeofence: boolean;
   date: string;
+  // Enhanced fields from joined data
+  userName?: string;
+  userEmail?: string;
+  locationName?: string;
+  locationAddress?: string;
 };
 
 type User = {
@@ -450,11 +455,11 @@ const AdminAttendancePage = () => {
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                               <div className="flex flex-col">
                                 <span className="text-muted-foreground">User:</span>
-                                <span>{getUserName(record.userId)}</span>
+                                <span>{record.userName || getUserName(record.userId)}</span>
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-muted-foreground">Location:</span>
-                                <span>{getLocationName(record.workLocationId)}</span>
+                                <span>{record.locationName || getLocationName(record.workLocationId)}</span>
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-muted-foreground">Clock In:</span>
@@ -507,8 +512,8 @@ const AdminAttendancePage = () => {
                             .map((record) => (
                               <TableRow key={record.id}>
                                 <TableCell>{formatDate(record.date)}</TableCell>
-                                <TableCell>{getUserName(record.userId)}</TableCell>
-                                <TableCell>{getLocationName(record.workLocationId)}</TableCell>
+                                <TableCell>{record.userName || getUserName(record.userId)}</TableCell>
+                                <TableCell>{record.locationName || getLocationName(record.workLocationId)}</TableCell>
                                 <TableCell>{formatTime(record.clockInTime)}</TableCell>
                                 <TableCell>{formatTime(record.clockOutTime)}</TableCell>
                                 <TableCell>
