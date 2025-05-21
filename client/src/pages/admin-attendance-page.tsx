@@ -315,7 +315,16 @@ const AdminAttendancePage = () => {
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="userFilter">Filter by User</Label>
                     <Select 
-                      onValueChange={(value) => setSelectedUserId(value === "0" ? null : parseInt(value))}
+                      onValueChange={(value) => {
+                        // Convert value to number or null (for "All Users")
+                        const userId = value === "0" ? null : parseInt(value);
+                        setSelectedUserId(userId);
+                        
+                        // Invalidate stats if user changes to load the correct data
+                        if (userId) {
+                          queryClient.invalidateQueries({ queryKey: ["/api/admin/attendance/user-stats", userId] });
+                        }
+                      }}
                       value={selectedUserId?.toString() || "0"}
                     >
                       <SelectTrigger id="userFilter" className="w-full sm:w-[200px]">
