@@ -795,10 +795,36 @@ const AdminAttendancePage = () => {
                 <CardDescription>Manage which users are assigned to which locations</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-center text-muted-foreground py-4">
-                  This table will show all user-location assignments once we fetch that data. 
-                  Currently, you can add assignments via the "Assign User" button above.
-                </p>
+                {isLoadingAssignments ? (
+                  <div className="text-center py-4">Loading assignments...</div>
+                ) : userAssignments.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Address</TableHead>
+                        <TableHead>Assigned Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {userAssignments.map((assignment) => (
+                        <TableRow key={assignment.id}>
+                          <TableCell className="font-medium">{assignment.userName}</TableCell>
+                          <TableCell>{assignment.userEmail}</TableCell>
+                          <TableCell>{assignment.locationName}</TableCell>
+                          <TableCell className="max-w-xs truncate">{assignment.locationAddress}</TableCell>
+                          <TableCell>{format(new Date(assignment.assignedAt), "MMM d, yyyy")}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">
+                    No user-location assignments found. Use the "Assign User" button above to add one.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -91,6 +91,7 @@ export async function createWorkLocation(location: Omit<WorkLocation, 'id' | 'cr
  */
 export async function getAllUserLocationAssignments(): Promise<any[]> {
   try {
+    // Check if the tables exist before querying
     const assignments = await db
       .select({
         id: userWorkLocations.id,

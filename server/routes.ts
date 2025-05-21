@@ -12,7 +12,8 @@ import {
   getUserAttendance, 
   getUserWorkLocations, 
   getUserWorkStats,
-  assignUserToWorkLocation
+  assignUserToWorkLocation,
+  getAllUserLocationAssignments
 } from "./attendanceService";
 import {
   getAllLeaveTypes,
@@ -611,6 +612,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching work locations:", error);
       res.status(500).json({ message: "Failed to fetch work locations" });
+    }
+  });
+  
+  // Get all user-location assignments (admin only)
+  app.get("/api/admin/attendance/user-assignments", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "admin" && req.user.username !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized access - not admin" });
+      }
+      
+      const assignments = await getAllUserLocationAssignments();
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error getting user-location assignments:", error);
+      res.status(500).json({ message: "Failed to get user-location assignments" });
     }
   });
   
