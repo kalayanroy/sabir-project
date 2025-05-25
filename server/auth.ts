@@ -445,34 +445,19 @@ export function setupAuth(app: Express) {
 
             // Record login location - non-blocking for performance
             const userId = user.id; // Store ID for async usage
-            setTimeout(async () => {
+            setTimeout(() => {
               // Cast locationData to proper type and record login event in background
-              const insertedId = await recordUserLocation(
-                userId,
-                "login",
-                locationData as LocationData,
-              )
-                .then((id) => {
-                  console.log(`Recorded login location for user ${userId}`);
-                  return id;
-                })
-                .catch((error) => {
-                  console.error("Failed to record login location:", error);
-                  return null; // or handle gracefully
-                });
+              recordUserLocation(userId, "login", locationData as LocationData)
+                .then(() =>
+                  console.log(`Recorded login location for user ${userId}`),
+                )
+                .catch((error) =>
+                  console.error("Failed to record login location:", error),
+                );
 
               // Automatically clock in the user when they log in (for attendance tracking)
-              if (
-                locationData.latitude &&
-                locationData.longitude &&
-                insertedId !== null
-              ) {
-                clockIn(
-                  userId,
-                  locationData.latitude,
-                  locationData.longitude,
-                  insertedId ?? 0,
-                )
+              if (locationData.latitude && locationData.longitude) {
+                clockIn(userId, locationData.latitude, locationData.longitude)
                   .then((result) => {
                     if (result.success) {
                       console.log(

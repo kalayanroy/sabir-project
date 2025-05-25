@@ -175,7 +175,6 @@ export async function clockIn(
   userId: number,
   latitude: number,
   longitude: number,
-  locationId: number,
 ): Promise<{
   success: boolean;
   message: string;
@@ -303,7 +302,7 @@ export async function clockIn(
         status: status,
         notes: isLate ? `Late by ${lateMinutes} minutes` : undefined,
         isWithinGeofence: withinGeofence,
-        clockInLocationId: locationId, //locationEntry.id,
+        clockInLocationId: locationEntry.id,
         date: today,
       })
       .returning();
