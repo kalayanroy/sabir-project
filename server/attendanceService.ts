@@ -255,7 +255,7 @@ export async function clockIn(
 
     // Use the provided location ID or create a new location entry
     let finalClockInLocationId = clockInLocationId;
-    
+
     if (!finalClockInLocationId) {
       // Create new location entry if no ID provided
       const [locationEntry] = await db
@@ -276,8 +276,8 @@ export async function clockIn(
           }),
         })
         .returning();
-      
-      finalClockInLocationId = locationEntry.id;
+
+      //finalClockInLocationId = locationEntry.id;
     }
 
     // Create attendance record
