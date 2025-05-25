@@ -178,7 +178,7 @@ const AdminAttendancePage = () => {
       queryKey: ["/api/admin/attendance/records"],
       enabled: !!user && user.role === "admin",
     });
-  console.log(attendanceRecords);
+
   // Get user stats if a user is selected
   const { data: userStats } = useQuery<WorkStats>({
     queryKey: ["/api/admin/attendance/user-stats", selectedUserId],
@@ -578,9 +578,11 @@ const AdminAttendancePage = () => {
                                   Location:
                                 </span>
                                 <span className="text-sm">
-                                  {record.locationAddress ||
-                                    record.locationName ||
-                                    getLocationName(record.workLocationId)}
+                                  {typeof record.locationAddress === 'string' 
+                                    ? record.locationAddress 
+                                    : record.locationAddress?.note || 
+                                      record.locationName ||
+                                      getLocationName(record.workLocationId)}
                                 </span>
                               </div>
                               <div className="flex flex-col">

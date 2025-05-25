@@ -623,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const records = await getAllAttendance(startDate, endDate, limit);
-        console.log(records);
+
         res.json(records);
       } catch (error) {
         console.error("Error fetching all attendance records:", error);
