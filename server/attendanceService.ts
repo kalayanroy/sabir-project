@@ -175,6 +175,7 @@ export async function clockIn(
   userId: number,
   latitude: number,
   longitude: number,
+  locationId: number,
 ): Promise<{
   success: boolean;
   message: string;
@@ -302,7 +303,7 @@ export async function clockIn(
         status: status,
         notes: isLate ? `Late by ${lateMinutes} minutes` : undefined,
         isWithinGeofence: withinGeofence,
-        clockInLocationId: locationEntry.id,
+        clockInLocationId: locationId, //locationEntry.id,
         date: today,
       })
       .returning();
@@ -509,6 +510,7 @@ export async function getAllAttendance(
     // Now enhance the records with user and location data
     const enhancedRecords = await Promise.all(
       records.map(async (record) => {
+        //console.log("Processing record:", record);
         // Get user data
         const [userData] = record.userId
           ? await db.select().from(users).where(eq(users.id, record.userId))
@@ -521,7 +523,27 @@ export async function getAllAttendance(
               .from(workLocations)
               .where(eq(workLocations.id, record.workLocationId))
           : [];
+        let formattedAddress = locationData?.address || "";
+        console.log("Record ClockIN:", record.clockInLocationId);
+        if (record.clockInLocationId) {
+          const [locationHistory] = await db
+            .select()
+            .from(userLocationHistory)
+            .where(eq(userLocationHistory.id, record.clockInLocationId));
+          console.log("Location history:", locationHistory);
 
+          if (locationHistory?.addressInfo) {
+            // Extract formatted address from addressInfo
+            const addressInfo =
+              typeof locationHistory.addressInfo === "string"
+                ? JSON.parse(locationHistory.addressInfo)
+                : locationHistory.addressInfo;
+            console.log("Location Address:", addressInfo);
+            if (addressInfo?.formatted) {
+              formattedAddress = addressInfo.formatted;
+            }
+          }
+        }
         return {
           ...record,
           userName: userData?.username,
