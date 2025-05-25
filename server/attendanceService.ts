@@ -537,11 +537,7 @@ export async function getUserAttendance(
         conditions,
         gte(attendance.date, startDate),
         lt(attendance.date, endDate),
-      );
-    } else {
-      // Use default conditions if no date range provided
-      // This ensures conditions is always SQL<unknown> and never undefined
-      conditions = and(conditions);
+      ) as any;
     }
 
     // Execute the query with all conditions in a single where clause
@@ -549,7 +545,7 @@ export async function getUserAttendance(
       .select()
       .from(attendance)
       .where(conditions)
-      .orderBy(sql`${attendance.date} DESC`)
+      .orderBy(desc(attendance.date))
       .limit(limit);
   } catch (error) {
     console.error("Error fetching user attendance:", error);
