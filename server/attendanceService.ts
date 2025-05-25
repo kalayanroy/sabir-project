@@ -175,6 +175,7 @@ export async function clockIn(
   userId: number,
   latitude: number,
   longitude: number,
+  clockInLocationId?: number,
 ): Promise<{
   success: boolean;
   message: string;
@@ -252,27 +253,32 @@ export async function clockIn(
       closestLocation.radius || 100,
     );
 
-    // Record location history entry for this clock-in
-    const [locationEntry] = await db
-      .insert(userLocationHistory)
-      .values({
-        userId,
-        eventType: "clock-in",
-        latitude,
-        longitude,
-        addressInfo: {
-          note: `Clock-in at ${closestLocation.name}`,
-        },
-        deviceInfo: JSON.stringify({
-          timestamp: new Date().toISOString(),
-          event: "clock-in",
-          locationName: closestLocation.name,
-          withinGeofence,
-        }),
-      })
-      .returning();
-
-    const clockInLocationId = locationEntry.id;
+    // Use the provided location ID or create a new location entry
+    let finalClockInLocationId = clockInLocationId;
+    
+    if (!finalClockInLocationId) {
+      // Create new location entry if no ID provided
+      const [locationEntry] = await db
+        .insert(userLocationHistory)
+        .values({
+          userId,
+          eventType: "clock-in",
+          latitude,
+          longitude,
+          addressInfo: {
+            note: `Clock-in at ${closestLocation.name}`,
+          },
+          deviceInfo: JSON.stringify({
+            timestamp: new Date().toISOString(),
+            event: "clock-in",
+            locationName: closestLocation.name,
+            withinGeofence,
+          }),
+        })
+        .returning();
+      
+      finalClockInLocationId = locationEntry.id;
+    }
 
     // Create attendance record
     const now = new Date();
@@ -302,7 +308,7 @@ export async function clockIn(
         status: status,
         notes: isLate ? `Late by ${lateMinutes} minutes` : undefined,
         isWithinGeofence: withinGeofence,
-        clockInLocationId: locationEntry.id,
+        clockInLocationId: finalClockInLocationId,
         date: today,
       })
       .returning();

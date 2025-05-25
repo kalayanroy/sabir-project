@@ -471,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const { latitude, longitude } = req.body;
+      const { latitude, longitude, clockInLocationId } = req.body;
 
       if (!latitude || !longitude) {
         return res.status(400).json({
@@ -479,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const result = await clockIn(req.user.id, latitude, longitude);
+      const result = await clockIn(req.user.id, latitude, longitude, clockInLocationId);
 
       if (!result.success) {
         return res.status(400).json({ message: result.message });
