@@ -9,7 +9,7 @@ import {
   WorkLocation,
   InsertAttendance,
 } from "@shared/schema";
-import { and, eq, gte, lt, sql } from "drizzle-orm";
+import { and, eq, gte, lt, sql, desc } from "drizzle-orm";
 
 // Distance calculation using Haversine formula (for calculating distance between coordinates)
 export function calculateDistance(
@@ -175,7 +175,6 @@ export async function clockIn(
   userId: number,
   latitude: number,
   longitude: number,
-  clockInLocationId?: number,
 ): Promise<{
   success: boolean;
   message: string;
@@ -252,33 +251,33 @@ export async function clockIn(
       closestLocation.longitude || 0,
       closestLocation.radius || 100,
     );
+    const geoData = await reverseGeocode(latitude, longitude);
+    // Record location history entry for this clock-in
+    const [locationEntry] = await db
+      .insert(userLocationHistory)
+      .values({
+        userId,
+        eventType: "clock-in",
+        latitude,
+        longitude,
+        //addressInfo: {
+        //  note: `Clock-in at ${closestLocation.name}`,
+        //},
+        addressInfo: {
+          formatted: geoData.address,
+          city: geoData.city,
+          country: geoData.country,
+        },
+        deviceInfo: JSON.stringify({
+          timestamp: new Date().toISOString(),
+          event: "clock-in",
+          locationName: closestLocation.name,
+          withinGeofence,
+        }),
+      })
+      .returning();
 
-    // Use the provided location ID or create a new location entry
-    let finalClockInLocationId = clockInLocationId;
-
-    if (!finalClockInLocationId) {
-      // Create new location entry if no ID provided
-      const [locationEntry] = await db
-        .insert(userLocationHistory)
-        .values({
-          userId,
-          eventType: "clock-in",
-          latitude,
-          longitude,
-          addressInfo: {
-            note: `Clock-in at ${closestLocation.name}`,
-          },
-          deviceInfo: JSON.stringify({
-            timestamp: new Date().toISOString(),
-            event: "clock-in",
-            locationName: closestLocation.name,
-            withinGeofence,
-          }),
-        })
-        .returning();
-
-      //finalClockInLocationId = locationEntry.id;
-    }
+    const clockInLocationId = locationEntry.id;
 
     // Create attendance record
     const now = new Date();
@@ -308,7 +307,7 @@ export async function clockIn(
         status: status,
         notes: isLate ? `Late by ${lateMinutes} minutes` : undefined,
         isWithinGeofence: withinGeofence,
-        clockInLocationId: finalClockInLocationId,
+        clockInLocationId: locationEntry.id,
         date: today,
       })
       .returning();
@@ -334,6 +333,80 @@ export async function clockIn(
       success: false,
       message: "An error occurred during clock in.",
     };
+  }
+}
+
+export async function reverseGeocode(latitude: number, longitude: number) {
+  // Format coordinates to 6 decimal places
+  const lat = latitude.toFixed(6);
+  const lon = longitude.toFixed(6);
+
+  // Generate cache key
+  const cacheKey = `${lat},${lon}`;
+
+  // Check cache first
+  if (locationCache.has(cacheKey)) {
+    console.log(`[Location] Using cached data for ${cacheKey}`);
+    return locationCache.get(cacheKey)!.data;
+  }
+
+  // Call the Nominatim API
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
+
+    console.log(`[Location] Fetching address for coordinates: ${lat}, ${lon}`);
+
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "SecureLoginSystem/1.0",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch location data: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as NominatimResponse;
+
+    // Process the response
+    const result = {
+      address: data.display_name,
+      city:
+        data.address.city ||
+        data.address.county ||
+        data.address.state ||
+        "Unknown",
+      country: data.address.country || "Unknown",
+      raw: data,
+    };
+
+    // Cache the result with timestamp
+    locationCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now(),
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error in reverse geocoding:", error);
+
+    // Create a fallback result
+    const fallbackResult = {
+      address: "Address lookup failed",
+      city: "Unknown",
+      country: "Unknown",
+      raw: null,
+    };
+
+    // Cache the fallback result too (but with a shorter TTL - 1 hour)
+    // This prevents repeated failed API calls
+    locationCache.set(cacheKey, {
+      data: fallbackResult,
+      timestamp: Date.now() - (CACHE_TTL - 3600000), // Will expire in 1 hour
+    });
+
+    return fallbackResult;
   }
 }
 
@@ -509,13 +582,12 @@ export async function getAllAttendance(
 
     // Execute the core query first to get attendance records
     const records = await baseQuery
-      .orderBy(sql`${attendance.date} DESC`)
+      .orderBy(desc(attendance.date))
       .limit(limit);
 
     // Now enhance the records with user and location data
     const enhancedRecords = await Promise.all(
       records.map(async (record) => {
-        //console.log("Processing record:", record);
         // Get user data
         const [userData] = record.userId
           ? await db.select().from(users).where(eq(users.id, record.userId))
@@ -528,27 +600,7 @@ export async function getAllAttendance(
               .from(workLocations)
               .where(eq(workLocations.id, record.workLocationId))
           : [];
-        let formattedAddress = locationData?.address || "";
-        console.log("Record ClockIN:", record.clockInLocationId);
-        if (record.clockInLocationId) {
-          const [locationHistory] = await db
-            .select()
-            .from(userLocationHistory)
-            .where(eq(userLocationHistory.id, record.clockInLocationId));
-          console.log("Location history:", locationHistory);
 
-          if (locationHistory?.addressInfo) {
-            // Extract formatted address from addressInfo
-            const addressInfo =
-              typeof locationHistory.addressInfo === "string"
-                ? JSON.parse(locationHistory.addressInfo)
-                : locationHistory.addressInfo;
-            console.log("Location Address:", addressInfo);
-            if (addressInfo?.formatted) {
-              formattedAddress = addressInfo.formatted;
-            }
-          }
-        }
         return {
           ...record,
           userName: userData?.username,
