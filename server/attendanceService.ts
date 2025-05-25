@@ -484,14 +484,7 @@ export async function getAllAttendance(
           .where(eq(userLocationHistory.id, record.clockInLocationId));
           
         if (locationHistory?.addressInfo) {
-          // Extract formatted address from addressInfo
-          const addressInfo = typeof locationHistory.addressInfo === 'string' 
-            ? JSON.parse(locationHistory.addressInfo) 
-            : locationHistory.addressInfo;
-          
-          if (addressInfo?.formatted) {
-            formattedAddress = addressInfo.formatted;
-          }
+          formattedAddress = locationHistory.addressInfo;
         }
       }
         
