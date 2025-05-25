@@ -471,17 +471,36 @@ export async function getAllAttendance(
         await db.select().from(users).where(eq(users.id, record.userId)) : 
         [];
         
-      // Get location data
+      // Get location data from work locations
       const [locationData] = record.workLocationId ?
         await db.select().from(workLocations).where(eq(workLocations.id, record.workLocationId)) :
         [];
+        
+      // Get actual address info from user location history for this attendance record
+      let formattedAddress = locationData?.address || '';
+      if (record.clockInLocationId) {
+        const [locationHistory] = await db.select()
+          .from(userLocationHistory)
+          .where(eq(userLocationHistory.id, record.clockInLocationId));
+          
+        if (locationHistory?.addressInfo) {
+          // Extract formatted address from addressInfo
+          const addressInfo = typeof locationHistory.addressInfo === 'string' 
+            ? JSON.parse(locationHistory.addressInfo) 
+            : locationHistory.addressInfo;
+          
+          if (addressInfo?.formatted) {
+            formattedAddress = addressInfo.formatted;
+          }
+        }
+      }
         
       return {
         ...record,
         userName: userData?.username,
         userEmail: userData?.email,
         locationName: locationData?.name,
-        locationAddress: locationData?.address
+        locationAddress: formattedAddress
       };
     }));
     

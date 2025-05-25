@@ -2,21 +2,65 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format, isToday, parseISO } from "date-fns";
-import { Filter, MapPin, Plus, UserPlus, BarChart3, Calendar as CalendarIcon, User, Users, LayoutGrid, ArrowLeft, RefreshCw } from "lucide-react";
+import {
+  Filter,
+  MapPin,
+  Plus,
+  UserPlus,
+  BarChart3,
+  Calendar as CalendarIcon,
+  User,
+  Users,
+  LayoutGrid,
+  ArrowLeft,
+  RefreshCw,
+} from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Redirect, Link } from "wouter";
 
@@ -120,18 +164,20 @@ const AdminAttendancePage = () => {
     queryKey: ["/api/admin/attendance/work-locations"],
     enabled: !!user && user.role === "admin",
   });
-  
+
   // Get all user assignments
-  const { data: userAssignments = [], isLoading: isLoadingAssignments } = useQuery<any[]>({
-    queryKey: ["/api/admin/attendance/user-assignments"],
-    enabled: !!user && user.role === "admin",
-  });
+  const { data: userAssignments = [], isLoading: isLoadingAssignments } =
+    useQuery<any[]>({
+      queryKey: ["/api/admin/attendance/user-assignments"],
+      enabled: !!user && user.role === "admin",
+    });
 
   // Get all attendance records
-  const { data: attendanceRecords = [], isLoading: isLoadingRecords } = useQuery<AttendanceRecord[]>({
-    queryKey: ["/api/admin/attendance/records"],
-    enabled: !!user && user.role === "admin",
-  });
+  const { data: attendanceRecords = [], isLoading: isLoadingRecords } =
+    useQuery<AttendanceRecord[]>({
+      queryKey: ["/api/admin/attendance/records"],
+      enabled: !!user && user.role === "admin",
+    });
 
   // Get user stats if a user is selected
   const { data: userStats } = useQuery<WorkStats>({
@@ -142,11 +188,17 @@ const AdminAttendancePage = () => {
   // Create new work location mutation
   const createLocationMutation = useMutation({
     mutationFn: async (locationData: NewLocationData) => {
-      const res = await apiRequest("POST", "/api/admin/attendance/work-locations", locationData);
+      const res = await apiRequest(
+        "POST",
+        "/api/admin/attendance/work-locations",
+        locationData,
+      );
       return await res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/attendance/work-locations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/attendance/work-locations"],
+      });
       toast({
         title: "Location Created",
         description: `${newLocation.name} has been successfully created.`,
@@ -174,7 +226,11 @@ const AdminAttendancePage = () => {
   // Assign user to location mutation
   const assignLocationMutation = useMutation({
     mutationFn: async (data: AssignLocationData) => {
-      const res = await apiRequest("POST", "/api/admin/attendance/assign-location", data);
+      const res = await apiRequest(
+        "POST",
+        "/api/admin/attendance/assign-location",
+        data,
+      );
       return await res.json();
     },
     onSuccess: () => {
@@ -200,7 +256,12 @@ const AdminAttendancePage = () => {
 
   // Handle creating a new location
   const handleCreateLocation = () => {
-    if (!newLocation.name || !newLocation.address || !newLocation.latitude || !newLocation.longitude) {
+    if (
+      !newLocation.name ||
+      !newLocation.address ||
+      !newLocation.latitude ||
+      !newLocation.longitude
+    ) {
       toast({
         title: "Missing Information",
         description: "Please provide name, address, latitude, and longitude.",
@@ -237,13 +298,13 @@ const AdminAttendancePage = () => {
 
   // Get username by ID
   const getUserName = (userId: number) => {
-    const user = users.find(u => u.id === userId);
+    const user = users.find((u) => u.id === userId);
     return user ? user.username : "Unknown User";
   };
 
   // Format work location name
   const getLocationName = (locationId: number) => {
-    const location = workLocations.find(loc => loc.id === locationId);
+    const location = workLocations.find((loc) => loc.id === locationId);
     return location ? location.name : "Unknown Location";
   };
 
@@ -282,20 +343,28 @@ const AdminAttendancePage = () => {
           </div>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={() => {
-            queryClient.invalidateQueries({ queryKey: ["/api/admin/attendance/records"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/admin/attendance/work-locations"] });
-            toast({
-              title: "Data refreshed",
-              description: "All attendance data has been updated",
-            });
-          }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              queryClient.invalidateQueries({
+                queryKey: ["/api/admin/attendance/records"],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["/api/admin/attendance/work-locations"],
+              });
+              toast({
+                title: "Data refreshed",
+                description: "All attendance data has been updated",
+              });
+            }}
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh Data
           </Button>
         </div>
       </div>
-      
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-4 mb-6">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -312,27 +381,37 @@ const AdminAttendancePage = () => {
                 <div className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Attendance Overview</CardTitle>
-                    <CardDescription>All attendance records in the system</CardDescription>
+                    <CardDescription>
+                      All attendance records in the system
+                    </CardDescription>
                   </div>
                 </div>
                 <Separator className="my-4" />
                 <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="userFilter">Filter by User</Label>
-                    <Select 
+                    <Select
                       onValueChange={(value) => {
                         // Convert value to number or null (for "All Users")
                         const userId = value === "0" ? null : parseInt(value);
                         setSelectedUserId(userId);
-                        
+
                         // Invalidate stats if user changes to load the correct data
                         if (userId) {
-                          queryClient.invalidateQueries({ queryKey: ["/api/admin/attendance/user-stats", userId] });
+                          queryClient.invalidateQueries({
+                            queryKey: [
+                              "/api/admin/attendance/user-stats",
+                              userId,
+                            ],
+                          });
                         }
                       }}
                       value={selectedUserId?.toString() || "0"}
                     >
-                      <SelectTrigger id="userFilter" className="w-full sm:w-[200px]">
+                      <SelectTrigger
+                        id="userFilter"
+                        className="w-full sm:w-[200px]"
+                      >
                         <SelectValue placeholder="Select a user" />
                       </SelectTrigger>
                       <SelectContent>
@@ -347,11 +426,14 @@ const AdminAttendancePage = () => {
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="statusFilter">Status</Label>
-                    <Select 
+                    <Select
                       onValueChange={(value) => setStatusFilter(value)}
                       value={statusFilter}
                     >
-                      <SelectTrigger id="statusFilter" className="w-full sm:w-[200px]">
+                      <SelectTrigger
+                        id="statusFilter"
+                        className="w-full sm:w-[200px]"
+                      >
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -371,7 +453,11 @@ const AdminAttendancePage = () => {
                           className="w-full sm:w-[200px] justify-start text-left font-normal"
                           id="fromDate"
                         >
-                          {fromDate ? format(fromDate, "PPP") : <span>Pick a date</span>}
+                          {fromDate ? (
+                            format(fromDate, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </PopoverTrigger>
@@ -394,7 +480,11 @@ const AdminAttendancePage = () => {
                           className="w-full sm:w-[200px] justify-start text-left font-normal"
                           id="toDate"
                         >
-                          {toDate ? format(toDate, "PPP") : <span>Pick a date</span>}
+                          {toDate ? (
+                            format(toDate, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </PopoverTrigger>
@@ -409,8 +499,8 @@ const AdminAttendancePage = () => {
                     </Popover>
                   </div>
                   <div className="flex items-end">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setFromDate(undefined);
                         setToDate(undefined);
@@ -431,53 +521,93 @@ const AdminAttendancePage = () => {
                     {/* Mobile view */}
                     <div className="grid grid-cols-1 gap-4 sm:hidden">
                       {attendanceRecords
-                        .filter(record => {
+                        .filter((record) => {
                           // Filter by user
-                          const userMatch = selectedUserId ? record.userId === selectedUserId : true;
-                          
+                          const userMatch = selectedUserId
+                            ? record.userId === selectedUserId
+                            : true;
+
                           // Filter by status
-                          const statusMatch = statusFilter === "all" ? true : record.status === statusFilter;
-                          
+                          const statusMatch =
+                            statusFilter === "all"
+                              ? true
+                              : record.status === statusFilter;
+
                           // Filter by date range
                           const recordDate = new Date(record.date);
-                          const fromDateMatch = fromDate ? recordDate >= fromDate : true;
-                          const toDateMatch = toDate ? recordDate <= toDate : true;
-                          
-                          return userMatch && statusMatch && fromDateMatch && toDateMatch;
+                          const fromDateMatch = fromDate
+                            ? recordDate >= fromDate
+                            : true;
+                          const toDateMatch = toDate
+                            ? recordDate <= toDate
+                            : true;
+
+                          return (
+                            userMatch &&
+                            statusMatch &&
+                            fromDateMatch &&
+                            toDateMatch
+                          );
                         })
                         .slice(0, 10)
                         .map((record) => (
                           <Card key={record.id} className="p-4">
                             <div className="flex justify-between items-center mb-2">
-                              <div className="font-medium">{formatDate(record.date)}</div>
-                              <div>{getStatusBadge(record.status, record.isWithinGeofence)}</div>
+                              <div className="font-medium">
+                                {formatDate(record.date)}
+                              </div>
+                              <div>
+                                {getStatusBadge(
+                                  record.status,
+                                  record.isWithinGeofence,
+                                )}
+                              </div>
                             </div>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                               <div className="flex flex-col">
-                                <span className="text-muted-foreground">User:</span>
-                                <span>{record.userName || getUserName(record.userId)}</span>
+                                <span className="text-muted-foreground">
+                                  User:
+                                </span>
+                                <span>
+                                  {record.userName ||
+                                    getUserName(record.userId)}
+                                </span>
                               </div>
                               <div className="flex flex-col">
-                                <span className="text-muted-foreground">Location:</span>
-                                <span>{record.locationName || getLocationName(record.workLocationId)}</span>
+                                <span className="text-muted-foreground">
+                                  Location:
+                                </span>
+                                <span className="text-sm">
+                                  {record.locationAddress || 
+                                   record.locationName ||
+                                   getLocationName(record.workLocationId)}
+                                </span>
                               </div>
                               <div className="flex flex-col">
-                                <span className="text-muted-foreground">Clock In:</span>
+                                <span className="text-muted-foreground">
+                                  Clock In:
+                                </span>
                                 <span>{formatTime(record.clockInTime)}</span>
                               </div>
                               <div className="flex flex-col">
-                                <span className="text-muted-foreground">Clock Out:</span>
+                                <span className="text-muted-foreground">
+                                  Clock Out:
+                                </span>
                                 <span>{formatTime(record.clockOutTime)}</span>
                               </div>
                               <div className="flex flex-col col-span-2">
-                                <span className="text-muted-foreground">Hours:</span>
-                                <span>{record.totalHours?.toFixed(1) || "-"}</span>
+                                <span className="text-muted-foreground">
+                                  Hours:
+                                </span>
+                                <span>
+                                  {record.totalHours?.toFixed(1) || "-"}
+                                </span>
                               </div>
                             </div>
                           </Card>
                         ))}
                     </div>
-                    
+
                     {/* Desktop view */}
                     <div className="hidden sm:block overflow-x-auto">
                       <Table>
@@ -485,42 +615,70 @@ const AdminAttendancePage = () => {
                           <TableRow>
                             <TableHead>Date</TableHead>
                             <TableHead>User</TableHead>
-                            <TableHead>Location</TableHead>
+                            <TableHead>Status</TableHead>
                             <TableHead>Clock In</TableHead>
                             <TableHead>Clock Out</TableHead>
                             <TableHead>Hours</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableHead>Location</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {attendanceRecords
-                            .filter(record => {
+                            .filter((record) => {
                               // Filter by user
-                              const userMatch = selectedUserId ? record.userId === selectedUserId : true;
-                              
+                              const userMatch = selectedUserId
+                                ? record.userId === selectedUserId
+                                : true;
+
                               // Filter by status
-                              const statusMatch = statusFilter === "all" ? true : record.status === statusFilter;
-                              
+                              const statusMatch =
+                                statusFilter === "all"
+                                  ? true
+                                  : record.status === statusFilter;
+
                               // Filter by date range
                               const recordDate = new Date(record.date);
-                              const fromDateMatch = fromDate ? recordDate >= fromDate : true;
-                              const toDateMatch = toDate ? recordDate <= toDate : true;
-                              
-                              return userMatch && statusMatch && fromDateMatch && toDateMatch;
+                              const fromDateMatch = fromDate
+                                ? recordDate >= fromDate
+                                : true;
+                              const toDateMatch = toDate
+                                ? recordDate <= toDate
+                                : true;
+
+                              return (
+                                userMatch &&
+                                statusMatch &&
+                                fromDateMatch &&
+                                toDateMatch
+                              );
                             })
                             .slice(0, 20)
                             .map((record) => (
                               <TableRow key={record.id}>
                                 <TableCell>{formatDate(record.date)}</TableCell>
-                                <TableCell>{record.userName || getUserName(record.userId)}</TableCell>
-                                <TableCell>{record.locationName || getLocationName(record.workLocationId)}</TableCell>
-                                <TableCell>{formatTime(record.clockInTime)}</TableCell>
-                                <TableCell>{formatTime(record.clockOutTime)}</TableCell>
+                                <TableCell>
+                                  {record.userName ||
+                                    getUserName(record.userId)}
+                                </TableCell>
+                                <TableCell>
+                                  {getStatusBadge(
+                                    record.status,
+                                    record.isWithinGeofence,
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {formatTime(record.clockInTime)}
+                                </TableCell>
+                                <TableCell>
+                                  {formatTime(record.clockOutTime)}
+                                </TableCell>
                                 <TableCell>
                                   {record.totalHours?.toFixed(1) || "-"}
                                 </TableCell>
+                                
                                 <TableCell>
-                                  {getStatusBadge(record.status, record.isWithinGeofence)}
+                                  {record.locationName ||
+                                    getLocationName(record.workLocationId)}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -540,39 +698,55 @@ const AdminAttendancePage = () => {
               <>
                 <Card className="md:col-span-3">
                   <CardHeader>
-                    <CardTitle>User Statistics: {getUserName(selectedUserId)}</CardTitle>
-                    <CardDescription>Attendance performance overview</CardDescription>
+                    <CardTitle>
+                      User Statistics: {getUserName(selectedUserId)}
+                    </CardTitle>
+                    <CardDescription>
+                      Attendance performance overview
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {userStats ? (
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                         <div className="bg-muted p-4 rounded-lg">
-                          <div className="text-3xl font-bold">{userStats.totalDays}</div>
-                          <div className="text-sm text-muted-foreground">Total Days</div>
+                          <div className="text-3xl font-bold">
+                            {userStats.totalDays}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Total Days
+                          </div>
                         </div>
                         <div className="bg-green-100 dark:bg-green-900/20 p-4 rounded-lg">
                           <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                             {userStats.presentDays}
                           </div>
-                          <div className="text-sm text-muted-foreground">Present Days</div>
+                          <div className="text-sm text-muted-foreground">
+                            Present Days
+                          </div>
                         </div>
                         <div className="bg-red-100 dark:bg-red-900/20 p-4 rounded-lg">
                           <div className="text-3xl font-bold text-red-600 dark:text-red-400">
                             {userStats.absentDays}
                           </div>
-                          <div className="text-sm text-muted-foreground">Absent Days</div>
+                          <div className="text-sm text-muted-foreground">
+                            Absent Days
+                          </div>
                         </div>
                         <div className="bg-orange-100 dark:bg-orange-900/20 p-4 rounded-lg">
                           <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                             {userStats.lateDays}
                           </div>
-                          <div className="text-sm text-muted-foreground">Late Days</div>
+                          <div className="text-sm text-muted-foreground">
+                            Late Days
+                          </div>
                         </div>
                         <div className="bg-blue-100 dark:bg-blue-900/20 p-4 rounded-lg">
                           <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                             {userStats.totalHours.toFixed(1)}
                           </div>
-                          <div className="text-sm text-muted-foreground">Total Hours</div>
+                          <div className="text-sm text-muted-foreground">
+                            Total Hours
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -592,7 +766,10 @@ const AdminAttendancePage = () => {
           <div className="grid grid-cols-1 gap-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Work Locations</h2>
-              <Dialog open={isAddingLocation} onOpenChange={setIsAddingLocation}>
+              <Dialog
+                open={isAddingLocation}
+                onOpenChange={setIsAddingLocation}
+              >
                 <DialogTrigger asChild>
                   <Button className="ml-auto">
                     <Plus className="mr-2 h-4 w-4" />
@@ -614,7 +791,12 @@ const AdminAttendancePage = () => {
                       <Input
                         id="name"
                         value={newLocation.name}
-                        onChange={(e) => setNewLocation({ ...newLocation, name: e.target.value })}
+                        onChange={(e) =>
+                          setNewLocation({
+                            ...newLocation,
+                            name: e.target.value,
+                          })
+                        }
                         className="col-span-3"
                       />
                     </div>
@@ -625,7 +807,12 @@ const AdminAttendancePage = () => {
                       <Input
                         id="address"
                         value={newLocation.address}
-                        onChange={(e) => setNewLocation({ ...newLocation, address: e.target.value })}
+                        onChange={(e) =>
+                          setNewLocation({
+                            ...newLocation,
+                            address: e.target.value,
+                          })
+                        }
                         className="col-span-3"
                       />
                     </div>
@@ -636,7 +823,12 @@ const AdminAttendancePage = () => {
                       <Textarea
                         id="description"
                         value={newLocation.description}
-                        onChange={(e) => setNewLocation({ ...newLocation, description: e.target.value })}
+                        onChange={(e) =>
+                          setNewLocation({
+                            ...newLocation,
+                            description: e.target.value,
+                          })
+                        }
                         className="col-span-3"
                       />
                     </div>
@@ -649,7 +841,12 @@ const AdminAttendancePage = () => {
                         type="number"
                         step="0.000001"
                         value={newLocation.latitude}
-                        onChange={(e) => setNewLocation({ ...newLocation, latitude: parseFloat(e.target.value) })}
+                        onChange={(e) =>
+                          setNewLocation({
+                            ...newLocation,
+                            latitude: parseFloat(e.target.value),
+                          })
+                        }
                         className="col-span-3"
                       />
                     </div>
@@ -662,7 +859,12 @@ const AdminAttendancePage = () => {
                         type="number"
                         step="0.000001"
                         value={newLocation.longitude}
-                        onChange={(e) => setNewLocation({ ...newLocation, longitude: parseFloat(e.target.value) })}
+                        onChange={(e) =>
+                          setNewLocation({
+                            ...newLocation,
+                            longitude: parseFloat(e.target.value),
+                          })
+                        }
                         className="col-span-3"
                       />
                     </div>
@@ -676,14 +878,25 @@ const AdminAttendancePage = () => {
                         min="10"
                         max="5000"
                         value={newLocation.radius}
-                        onChange={(e) => setNewLocation({ ...newLocation, radius: parseInt(e.target.value) })}
+                        onChange={(e) =>
+                          setNewLocation({
+                            ...newLocation,
+                            radius: parseInt(e.target.value),
+                          })
+                        }
                         className="col-span-3"
                       />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="submit" onClick={handleCreateLocation} disabled={createLocationMutation.isPending}>
-                      {createLocationMutation.isPending ? "Creating..." : "Create Location"}
+                    <Button
+                      type="submit"
+                      onClick={handleCreateLocation}
+                      disabled={createLocationMutation.isPending}
+                    >
+                      {createLocationMutation.isPending
+                        ? "Creating..."
+                        : "Create Location"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -705,7 +918,8 @@ const AdminAttendancePage = () => {
                           <div>
                             <p className="text-sm">{location.address}</p>
                             <p className="text-xs text-muted-foreground">
-                              {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                              {location.latitude.toFixed(6)},{" "}
+                              {location.longitude.toFixed(6)}
                             </p>
                           </div>
                         </div>
@@ -715,7 +929,9 @@ const AdminAttendancePage = () => {
                           </p>
                         )}
                         <div className="text-sm flex items-center gap-1">
-                          <span className="text-muted-foreground">Geofence radius:</span>
+                          <span className="text-muted-foreground">
+                            Geofence radius:
+                          </span>
                           <span>{location.radius} meters</span>
                         </div>
                       </div>
@@ -725,8 +941,13 @@ const AdminAttendancePage = () => {
               ) : (
                 <div className="col-span-full text-center py-8 text-muted-foreground">
                   <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">No Work Locations</h3>
-                  <p>Create your first work location to start tracking attendance.</p>
+                  <h3 className="text-lg font-medium mb-2">
+                    No Work Locations
+                  </h3>
+                  <p>
+                    Create your first work location to start tracking
+                    attendance.
+                  </p>
                 </div>
               )}
             </div>
@@ -738,7 +959,10 @@ const AdminAttendancePage = () => {
           <div className="grid grid-cols-1 gap-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">User Assignments</h2>
-              <Dialog open={isAssigningLocation} onOpenChange={setIsAssigningLocation}>
+              <Dialog
+                open={isAssigningLocation}
+                onOpenChange={setIsAssigningLocation}
+              >
                 <DialogTrigger asChild>
                   <Button className="ml-auto">
                     <UserPlus className="mr-2 h-4 w-4" />
@@ -758,15 +982,27 @@ const AdminAttendancePage = () => {
                         User
                       </Label>
                       <Select
-                        onValueChange={(value) => setAssignLocation({ ...assignLocation, userId: parseInt(value) })}
-                        value={assignLocation.userId ? assignLocation.userId.toString() : undefined}
+                        onValueChange={(value) =>
+                          setAssignLocation({
+                            ...assignLocation,
+                            userId: parseInt(value),
+                          })
+                        }
+                        value={
+                          assignLocation.userId
+                            ? assignLocation.userId.toString()
+                            : undefined
+                        }
                       >
                         <SelectTrigger id="userId" className="col-span-3">
                           <SelectValue placeholder="Select a user" />
                         </SelectTrigger>
                         <SelectContent>
                           {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id.toString()}>
+                            <SelectItem
+                              key={user.id}
+                              value={user.id.toString()}
+                            >
                               {user.username}
                             </SelectItem>
                           ))}
@@ -778,15 +1014,27 @@ const AdminAttendancePage = () => {
                         Location
                       </Label>
                       <Select
-                        onValueChange={(value) => setAssignLocation({ ...assignLocation, locationId: parseInt(value) })}
-                        value={assignLocation.locationId ? assignLocation.locationId.toString() : undefined}
+                        onValueChange={(value) =>
+                          setAssignLocation({
+                            ...assignLocation,
+                            locationId: parseInt(value),
+                          })
+                        }
+                        value={
+                          assignLocation.locationId
+                            ? assignLocation.locationId.toString()
+                            : undefined
+                        }
                       >
                         <SelectTrigger id="locationId" className="col-span-3">
                           <SelectValue placeholder="Select a location" />
                         </SelectTrigger>
                         <SelectContent>
                           {workLocations.map((location) => (
-                            <SelectItem key={location.id} value={location.id.toString()}>
+                            <SelectItem
+                              key={location.id}
+                              value={location.id.toString()}
+                            >
                               {location.name}
                             </SelectItem>
                           ))}
@@ -795,8 +1043,14 @@ const AdminAttendancePage = () => {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="submit" onClick={handleAssignLocation} disabled={assignLocationMutation.isPending}>
-                      {assignLocationMutation.isPending ? "Assigning..." : "Assign User"}
+                    <Button
+                      type="submit"
+                      onClick={handleAssignLocation}
+                      disabled={assignLocationMutation.isPending}
+                    >
+                      {assignLocationMutation.isPending
+                        ? "Assigning..."
+                        : "Assign User"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -806,7 +1060,9 @@ const AdminAttendancePage = () => {
             <Card>
               <CardHeader>
                 <CardTitle>User-Location Assignments</CardTitle>
-                <CardDescription>Manage which users are assigned to which locations</CardDescription>
+                <CardDescription>
+                  Manage which users are assigned to which locations
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingAssignments ? (
@@ -825,18 +1081,28 @@ const AdminAttendancePage = () => {
                     <TableBody>
                       {userAssignments.map((assignment) => (
                         <TableRow key={assignment.id}>
-                          <TableCell className="font-medium">{assignment.userName}</TableCell>
+                          <TableCell className="font-medium">
+                            {assignment.userName}
+                          </TableCell>
                           <TableCell>{assignment.userEmail}</TableCell>
                           <TableCell>{assignment.locationName}</TableCell>
-                          <TableCell className="max-w-xs truncate">{assignment.locationAddress}</TableCell>
-                          <TableCell>{format(new Date(assignment.assignedAt), "MMM d, yyyy")}</TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {assignment.locationAddress}
+                          </TableCell>
+                          <TableCell>
+                            {format(
+                              new Date(assignment.assignedAt),
+                              "MMM d, yyyy",
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 ) : (
                   <p className="text-center text-muted-foreground py-4">
-                    No user-location assignments found. Use the "Assign User" button above to add one.
+                    No user-location assignments found. Use the "Assign User"
+                    button above to add one.
                   </p>
                 )}
               </CardContent>
@@ -850,7 +1116,9 @@ const AdminAttendancePage = () => {
             <Card className="md:col-span-3">
               <CardHeader>
                 <CardTitle>Attendance Reports</CardTitle>
-                <CardDescription>Analyze attendance data for all users</CardDescription>
+                <CardDescription>
+                  Analyze attendance data for all users
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Responsive grid layout for report cards */}
@@ -863,9 +1131,13 @@ const AdminAttendancePage = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-bold">
-                          {attendanceRecords.filter(record => 
-                            isToday(new Date(record.date)) && record.status === "present"
-                          ).length}
+                          {
+                            attendanceRecords.filter(
+                              (record) =>
+                                isToday(new Date(record.date)) &&
+                                record.status === "present",
+                            ).length
+                          }
                         </div>
                       </CardContent>
                     </Card>
@@ -875,14 +1147,18 @@ const AdminAttendancePage = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-bold">
-                          {attendanceRecords.filter(record => 
-                            isToday(new Date(record.date)) && record.status === "absent"
-                          ).length}
+                          {
+                            attendanceRecords.filter(
+                              (record) =>
+                                isToday(new Date(record.date)) &&
+                                record.status === "absent",
+                            ).length
+                          }
                         </div>
                       </CardContent>
                     </Card>
                   </div>
-                  
+
                   {/* Second row - Late and Total - will be side by side on all devices */}
                   <div className="grid grid-cols-2 gap-4">
                     <Card>
@@ -891,9 +1167,13 @@ const AdminAttendancePage = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-bold">
-                          {attendanceRecords.filter(record => 
-                            isToday(new Date(record.date)) && record.status === "late"
-                          ).length}
+                          {
+                            attendanceRecords.filter(
+                              (record) =>
+                                isToday(new Date(record.date)) &&
+                                record.status === "late",
+                            ).length
+                          }
                         </div>
                       </CardContent>
                     </Card>
@@ -909,40 +1189,71 @@ const AdminAttendancePage = () => {
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-4">Attendance Summary</h3>
-                  
+                  <h3 className="text-lg font-semibold mb-4">
+                    Attendance Summary
+                  </h3>
+
                   {/* Responsive Table Design */}
                   <div className="grid grid-cols-1 gap-4 sm:hidden">
-                    {users.map(user => {
-                      const userRecords = attendanceRecords.filter(record => record.userId === user.id);
-                      const presentCount = userRecords.filter(record => record.status === "present").length;
-                      const absentCount = userRecords.filter(record => record.status === "absent").length;
-                      const lateCount = userRecords.filter(record => record.status === "late").length;
-                      const totalHours = userRecords.reduce((total, record) => total + (record.totalHours || 0), 0);
-                      
+                    {users.map((user) => {
+                      const userRecords = attendanceRecords.filter(
+                        (record) => record.userId === user.id,
+                      );
+                      const presentCount = userRecords.filter(
+                        (record) => record.status === "present",
+                      ).length;
+                      const absentCount = userRecords.filter(
+                        (record) => record.status === "absent",
+                      ).length;
+                      const lateCount = userRecords.filter(
+                        (record) => record.status === "late",
+                      ).length;
+                      const totalHours = userRecords.reduce(
+                        (total, record) => total + (record.totalHours || 0),
+                        0,
+                      );
+
                       return (
                         <Card key={user.id} className="p-4">
-                          <div className="font-medium text-lg mb-2">{user.username}</div>
+                          <div className="font-medium text-lg mb-2">
+                            {user.username}
+                          </div>
                           <div className="grid grid-cols-2 gap-2 mb-3">
                             <div>
-                              <span className="text-muted-foreground text-sm">Present:</span>
-                              <span className="ml-2 font-medium">{presentCount}</span>
+                              <span className="text-muted-foreground text-sm">
+                                Present:
+                              </span>
+                              <span className="ml-2 font-medium">
+                                {presentCount}
+                              </span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground text-sm">Absent:</span>
-                              <span className="ml-2 font-medium">{absentCount}</span>
+                              <span className="text-muted-foreground text-sm">
+                                Absent:
+                              </span>
+                              <span className="ml-2 font-medium">
+                                {absentCount}
+                              </span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground text-sm">Late:</span>
-                              <span className="ml-2 font-medium">{lateCount}</span>
+                              <span className="text-muted-foreground text-sm">
+                                Late:
+                              </span>
+                              <span className="ml-2 font-medium">
+                                {lateCount}
+                              </span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground text-sm">Hours:</span>
-                              <span className="ml-2 font-medium">{totalHours.toFixed(1)}</span>
+                              <span className="text-muted-foreground text-sm">
+                                Hours:
+                              </span>
+                              <span className="ml-2 font-medium">
+                                {totalHours.toFixed(1)}
+                              </span>
                             </div>
                           </div>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className="w-full"
                             onClick={() => {
@@ -956,7 +1267,7 @@ const AdminAttendancePage = () => {
                       );
                     })}
                   </div>
-                  
+
                   {/* Desktop Table */}
                   <div className="hidden sm:block overflow-x-auto">
                     <Table>
@@ -971,13 +1282,24 @@ const AdminAttendancePage = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {users.map(user => {
-                          const userRecords = attendanceRecords.filter(record => record.userId === user.id);
-                          const presentCount = userRecords.filter(record => record.status === "present").length;
-                          const absentCount = userRecords.filter(record => record.status === "absent").length;
-                          const lateCount = userRecords.filter(record => record.status === "late").length;
-                          const totalHours = userRecords.reduce((total, record) => total + (record.totalHours || 0), 0);
-                          
+                        {users.map((user) => {
+                          const userRecords = attendanceRecords.filter(
+                            (record) => record.userId === user.id,
+                          );
+                          const presentCount = userRecords.filter(
+                            (record) => record.status === "present",
+                          ).length;
+                          const absentCount = userRecords.filter(
+                            (record) => record.status === "absent",
+                          ).length;
+                          const lateCount = userRecords.filter(
+                            (record) => record.status === "late",
+                          ).length;
+                          const totalHours = userRecords.reduce(
+                            (total, record) => total + (record.totalHours || 0),
+                            0,
+                          );
+
                           return (
                             <TableRow key={user.id}>
                               <TableCell>{user.username}</TableCell>
@@ -986,8 +1308,8 @@ const AdminAttendancePage = () => {
                               <TableCell>{lateCount}</TableCell>
                               <TableCell>{totalHours.toFixed(1)}</TableCell>
                               <TableCell>
-                                <Button 
-                                  variant="outline" 
+                                <Button
+                                  variant="outline"
                                   size="sm"
                                   onClick={() => {
                                     setSelectedUserId(user.id);
