@@ -11,6 +11,32 @@ import {
 } from "@shared/schema";
 import { and, eq, gte, lt, sql, desc } from "drizzle-orm";
 
+// Cache for location data to avoid repeated API calls
+const locationCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+// Interface for the Nominatim API response
+interface NominatimResponse {
+  place_id: number;
+  licence: string;
+  osm_type: string;
+  osm_id: number;
+  lat: string;
+  lon: string;
+  display_name: string;
+  address: {
+    road?: string;
+    suburb?: string;
+    city?: string;
+    county?: string;
+    state?: string;
+    postcode?: string;
+    country?: string;
+    country_code?: string;
+  };
+  boundingbox: string[];
+}
+
 // Distance calculation using Haversine formula (for calculating distance between coordinates)
 export function calculateDistance(
   lat1: number,
@@ -252,6 +278,7 @@ export async function clockIn(
       closestLocation.radius || 100,
     );
     const geoData = await reverseGeocode(latitude, longitude);
+    console.log(`[Location] Clock-in at ${closestLocation.name}: ${geoData}`);
     // Record location history entry for this clock-in
     const [locationEntry] = await db
       .insert(userLocationHistory)
@@ -346,8 +373,15 @@ export async function reverseGeocode(latitude: number, longitude: number) {
 
   // Check cache first
   if (locationCache.has(cacheKey)) {
-    console.log(`[Location] Using cached data for ${cacheKey}`);
-    return locationCache.get(cacheKey)!.data;
+    const cached = locationCache.get(cacheKey)!;
+    // Check if cache entry is still valid
+    if (Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log(`[Location] Using cached data for ${cacheKey}`);
+      return cached.data;
+    } else {
+      // Remove expired entry
+      locationCache.delete(cacheKey);
+    }
   }
 
   // Call the Nominatim API
@@ -577,9 +611,7 @@ export async function getAllAttendance(
     }
 
     // Execute the core query first to get attendance records
-    const records = await baseQuery
-      .orderBy(desc(attendance.date))
-      .limit(limit);
+    const records = await baseQuery.orderBy(desc(attendance.date)).limit(limit);
 
     // Now enhance the records with user and location data
     const enhancedRecords = await Promise.all(
