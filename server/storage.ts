@@ -67,8 +67,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(insertUser).returning();
+    // Generate Employee ID automatically
+    const nextEmpId = await this.generateNextEmpId();
+    
+    const result = await db.insert(users).values({
+      ...insertUser,
+      empId: nextEmpId
+    }).returning();
     return result[0];
+  }
+
+  private async generateNextEmpId(): Promise<string> {
+    // Get the highest employee ID number currently in use
+    const result = await db
+      .select({ empId: users.empId })
+      .from(users)
+      .where(sql`${users.empId} IS NOT NULL`)
+      .orderBy(sql`CAST(SUBSTRING(${users.empId} FROM 5) AS INTEGER) DESC`)
+      .limit(1);
+
+    let nextNumber = 1;
+    if (result.length > 0 && result[0].empId) {
+      // Extract the number from "Emp-X" format
+      const currentNumber = parseInt(result[0].empId.substring(4));
+      nextNumber = currentNumber + 1;
+    }
+
+    return `Emp-${nextNumber}`;
   }
   
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
