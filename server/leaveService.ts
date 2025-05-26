@@ -36,24 +36,39 @@ export async function updateLeaveType(id: number, data: Partial<LeaveType>): Pro
 }
 
 /**
- * Delete a leave type (only if not used)
+ * Delete a leave type (only if not actively used)
  */
 export async function deleteLeaveType(id: number): Promise<boolean> {
-  // Check if leave type is used
-  const balanceCount = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(leaveBalances)
-    .where(eq(leaveBalances.leaveTypeId, id));
-  
-  const requestCount = await db
+  // Check if leave type has any approved or pending leave requests
+  const activeRequestCount = await db
     .select({ count: sql<number>`count(*)` })
     .from(leaveRequests)
-    .where(eq(leaveRequests.leaveTypeId, id));
+    .where(and(
+      eq(leaveRequests.leaveTypeId, id),
+      sql`${leaveRequests.status} IN ('pending', 'approved')`
+    ));
   
-  if (balanceCount[0].count > 0 || requestCount[0].count > 0) {
-    throw new Error("Cannot delete leave type that is in use");
+  // Check if leave type has any leave balances with used days > 0
+  const usedBalanceCount = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(leaveBalances)
+    .where(and(
+      eq(leaveBalances.leaveTypeId, id),
+      sql`${leaveBalances.usedDays} > 0`
+    ));
+  
+  if (activeRequestCount[0].count > 0) {
+    throw new Error("Cannot delete leave type with pending or approved leave requests");
   }
   
+  if (usedBalanceCount[0].count > 0) {
+    throw new Error("Cannot delete leave type that has been used by employees");
+  }
+  
+  // Delete related unused leave balances first
+  await db.delete(leaveBalances).where(eq(leaveBalances.leaveTypeId, id));
+  
+  // Delete the leave type
   await db.delete(leaveTypes).where(eq(leaveTypes.id, id));
   return true;
 }
