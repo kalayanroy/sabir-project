@@ -2,25 +2,38 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import {
+  Table,
+  TableHeader,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  LogOut, 
-  User, 
-  Settings, 
-  HelpCircle, 
-  Shield, 
-  Edit, 
-  Lock, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  LogOut,
+  User,
+  Settings,
+  HelpCircle,
+  Shield,
+  Edit,
+  Lock,
   Search,
   Menu,
   X,
   CheckCircle,
   AlertCircle,
   UserCheck,
-  UserX
+  UserX,
 } from "lucide-react";
 // Import Map icon separately to avoid conflict with built-in Map object
 import { Map as MapIcon } from "lucide-react";
@@ -49,7 +62,7 @@ export default function UserAdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<SafeUser | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>("");
-  
+
   const handleLogout = () => {
     logoutMutation.mutate(undefined);
   };
@@ -59,7 +72,12 @@ export default function UserAdminPage() {
   };
 
   // Query to fetch all users
-  const { data: users = [], isLoading, error, refetch } = useQuery({
+  const {
+    data: users = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/admin/users");
@@ -67,7 +85,7 @@ export default function UserAdminPage() {
         throw new Error("Failed to fetch users");
       }
       return await res.json();
-    }
+    },
   });
 
   // Mutation to update user role
@@ -86,7 +104,7 @@ export default function UserAdminPage() {
         description: `User role has been updated successfully.`,
         variant: "default",
       });
-      
+
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setSelectedUser(null);
@@ -98,12 +116,13 @@ export default function UserAdminPage() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
-  const filteredUsers = users.filter((user: SafeUser) => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (user: SafeUser) =>
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleRoleChange = (role: string) => {
@@ -112,7 +131,7 @@ export default function UserAdminPage() {
 
   const handleUpdateRole = () => {
     if (!selectedUser || !selectedRole) return;
-    
+
     // Don't update if the role is the same
     if (selectedUser.role === selectedRole) {
       toast({
@@ -122,10 +141,10 @@ export default function UserAdminPage() {
       });
       return;
     }
-    
+
     updateRoleMutation.mutate({
       userId: selectedUser.id,
-      role: selectedRole
+      role: selectedRole,
     });
   };
 
@@ -149,7 +168,8 @@ export default function UserAdminPage() {
           </CardHeader>
           <CardContent>
             <p className="text-center mb-6">
-              You don't have permission to access this page. Only administrators can manage users.
+              You don't have permission to access this page. Only administrators
+              can manage users.
             </p>
             <div className="flex justify-center">
               <Button asChild>
@@ -168,9 +188,9 @@ export default function UserAdminPage() {
       <header className="bg-primary text-white shadow-md">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="md:hidden text-white mr-2 hover:bg-white/20"
               onClick={toggleMobileMenu}
             >
@@ -183,10 +203,10 @@ export default function UserAdminPage() {
             <div className="hidden md:block mr-4">
               <span className="text-sm">{user.email}</span>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-white hover:bg-white/20" 
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/20"
               onClick={handleLogout}
               disabled={logoutMutation.isPending}
             >
@@ -196,19 +216,19 @@ export default function UserAdminPage() {
           </div>
         </div>
       </header>
-      
+
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
-      
+
       {/* Mobile Sidebar */}
-      <div 
+      <div
         className={`fixed top-0 left-0 h-full w-64 bg-card shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex justify-between items-center p-4 border-b">
@@ -216,15 +236,15 @@ export default function UserAdminPage() {
             <Lock className="h-5 w-5 mr-2 text-primary" />
             <h2 className="font-medium">SecureLogin</h2>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setMobileMenuOpen(false)}
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
-        
+
         <div className="p-4">
           <div className="flex items-center mb-6">
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
@@ -235,13 +255,13 @@ export default function UserAdminPage() {
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
           </div>
-          
+
           <nav>
             <ul className="space-y-1">
               <li>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start font-normal" 
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start font-normal"
                   asChild
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -254,9 +274,9 @@ export default function UserAdminPage() {
               {(user.username === "admin" || user.username === "admin1") && (
                 <>
                   <li>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start font-normal" 
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start font-normal"
                       asChild
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -267,9 +287,9 @@ export default function UserAdminPage() {
                     </Button>
                   </li>
                   <li>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start font-normal bg-muted" 
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start font-normal bg-muted"
                       asChild
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -280,9 +300,9 @@ export default function UserAdminPage() {
                     </Button>
                   </li>
                   <li>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start font-normal" 
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start font-normal"
                       asChild
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -295,9 +315,9 @@ export default function UserAdminPage() {
                 </>
               )}
               <li>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start font-normal" 
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start font-normal"
                   asChild
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -308,9 +328,9 @@ export default function UserAdminPage() {
                 </Button>
               </li>
               <li>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start font-normal" 
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start font-normal"
                   asChild
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -321,9 +341,9 @@ export default function UserAdminPage() {
                 </Button>
               </li>
               <li>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start font-normal" 
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start font-normal"
                   asChild
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -337,7 +357,7 @@ export default function UserAdminPage() {
           </nav>
         </div>
       </div>
-      
+
       {/* Main Content */}
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
@@ -352,11 +372,15 @@ export default function UserAdminPage() {
                 <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
             </div>
-            
+
             <nav>
               <ul className="space-y-1">
                 <li>
-                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start font-normal"
+                    asChild
+                  >
                     <a href="/" className="flex items-center">
                       <User className="mr-3 h-5 w-5 text-primary" />
                       Dashboard
@@ -366,7 +390,11 @@ export default function UserAdminPage() {
                 {(user.username === "admin" || user.username === "admin1") && (
                   <>
                     <li>
-                      <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start font-normal"
+                        asChild
+                      >
                         <a href="/admin" className="flex items-center">
                           <Shield className="mr-3 h-5 w-5 text-red-500" />
                           Device Manager
@@ -374,7 +402,11 @@ export default function UserAdminPage() {
                       </Button>
                     </li>
                     <li>
-                      <Button variant="ghost" className="w-full justify-start font-normal bg-muted" asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start font-normal bg-muted"
+                        asChild
+                      >
                         <a href="/user-admin" className="flex items-center">
                           <UserCheck className="mr-3 h-5 w-5 text-green-600" />
                           User Management
@@ -382,8 +414,15 @@ export default function UserAdminPage() {
                       </Button>
                     </li>
                     <li>
-                      <Button variant="ghost" className="w-full justify-start font-normal" asChild>
-                        <a href="/location-manager" className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start font-normal"
+                        asChild
+                      >
+                        <a
+                          href="/location-manager"
+                          className="flex items-center"
+                        >
                           <MapIcon className="mr-3 h-5 w-5 text-blue-500" />
                           Location Manager
                         </a>
@@ -392,7 +431,11 @@ export default function UserAdminPage() {
                   </>
                 )}
                 <li>
-                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start font-normal"
+                    asChild
+                  >
                     <a href="/profile" className="flex items-center">
                       <Edit className="mr-3 h-5 w-5 text-muted-foreground" />
                       Profile
@@ -400,7 +443,11 @@ export default function UserAdminPage() {
                   </Button>
                 </li>
                 <li>
-                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start font-normal"
+                    asChild
+                  >
                     <a href="/security" className="flex items-center">
                       <Settings className="mr-3 h-5 w-5 text-muted-foreground" />
                       Security Settings
@@ -408,7 +455,11 @@ export default function UserAdminPage() {
                   </Button>
                 </li>
                 <li>
-                  <Button variant="ghost" className="w-full justify-start font-normal" asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start font-normal"
+                    asChild
+                  >
                     <a href="/help" className="flex items-center">
                       <HelpCircle className="mr-3 h-5 w-5 text-muted-foreground" />
                       Help
@@ -419,7 +470,7 @@ export default function UserAdminPage() {
             </nav>
           </div>
         </div>
-        
+
         {/* Content Area */}
         <div className="flex-1 p-6 bg-background">
           <div className="container mx-auto">
@@ -431,9 +482,9 @@ export default function UserAdminPage() {
               <div className="flex items-center">
                 <div className="relative">
                   <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                  <Input 
-                    type="search" 
-                    placeholder="Search users..." 
+                  <Input
+                    type="search"
+                    placeholder="Search users..."
                     className="pl-10 w-full sm:w-[250px]"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -441,7 +492,7 @@ export default function UserAdminPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
@@ -468,33 +519,56 @@ export default function UserAdminPage() {
                           <TableHeader>
                             <TableRow>
                               <TableHead>Username</TableHead>
+                              <TableHead>Emp. ID</TableHead>
                               <TableHead>Email</TableHead>
                               <TableHead>Role</TableHead>
-                              <TableHead className="text-right">Actions</TableHead>
+                              <TableHead className="text-right">
+                                Actions
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {filteredUsers.length === 0 ? (
                               <TableRow>
-                                <TableCell colSpan={4} className="text-center">No users found</TableCell>
+                                <TableCell colSpan={4} className="text-center">
+                                  No users found
+                                </TableCell>
                               </TableRow>
                             ) : (
                               filteredUsers.map((user: SafeUser) => (
-                                <TableRow key={user.id} className={selectedUser?.id === user.id ? "bg-muted" : ""}>
-                                  <TableCell className="font-medium">{user.username}</TableCell>
+                                <TableRow
+                                  key={user.id}
+                                  className={
+                                    selectedUser?.id === user.id
+                                      ? "bg-muted"
+                                      : ""
+                                  }
+                                >
+                                  <TableCell className="font-medium">
+                                    {user.username}
+                                  </TableCell>
+                                  <TableCell>{user.empId}</TableCell>
                                   <TableCell>{user.email}</TableCell>
                                   <TableCell>
-                                    <Badge variant={user.role === "admin" ? "default" : "outline"}>
+                                    <Badge
+                                      variant={
+                                        user.role === "admin"
+                                          ? "default"
+                                          : "outline"
+                                      }
+                                    >
                                       {user.role}
                                     </Badge>
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
                                       onClick={() => selectUser(user)}
                                     >
-                                      {selectedUser?.id === user.id ? "Selected" : "Select"}
+                                      {selectedUser?.id === user.id
+                                        ? "Selected"
+                                        : "Select"}
                                     </Button>
                                   </TableCell>
                                 </TableRow>
@@ -507,7 +581,7 @@ export default function UserAdminPage() {
                   </CardContent>
                 </Card>
               </div>
-              
+
               <div>
                 <Card>
                   <CardHeader>
@@ -529,15 +603,21 @@ export default function UserAdminPage() {
                             <User className="h-6 w-6 text-primary" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-medium">{selectedUser.username}</h3>
-                            <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                            <h3 className="text-lg font-medium">
+                              {selectedUser.username}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {selectedUser.email}
+                            </p>
                           </div>
                         </div>
-                        
+
                         <Separator />
-                        
+
                         <div>
-                          <label className="text-sm font-medium mb-2 block">User Role</label>
+                          <label className="text-sm font-medium mb-2 block">
+                            User Role
+                          </label>
                           <div className="flex items-center gap-4">
                             <Select
                               value={selectedRole}
@@ -553,16 +633,20 @@ export default function UserAdminPage() {
                             </Select>
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
-                            {selectedRole === "admin" 
+                            {selectedRole === "admin"
                               ? "Admin users can access administrative features and bypass device binding."
                               : "Regular users are bound to their registered device and have limited access."}
                           </p>
                         </div>
-                        
+
                         <div className="pt-4">
-                          <Button 
+                          <Button
                             className="w-full"
-                            disabled={!selectedRole || selectedRole === selectedUser.role || updateRoleMutation.isPending}
+                            disabled={
+                              !selectedRole ||
+                              selectedRole === selectedUser.role ||
+                              updateRoleMutation.isPending
+                            }
                             onClick={handleUpdateRole}
                           >
                             {updateRoleMutation.isPending ? (
@@ -578,23 +662,37 @@ export default function UserAdminPage() {
                             )}
                           </Button>
                         </div>
-                        
+
                         <Separator />
-                        
+
                         <div className="bg-muted p-3 rounded-md">
-                          <h4 className="font-medium mb-2">Device Information</h4>
+                          <h4 className="font-medium mb-2">
+                            Device Information
+                          </h4>
                           <div className="text-sm space-y-2">
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Device ID:</span>
-                              <span className="font-mono">{selectedUser.deviceId || "Not registered"}</span>
+                              <span className="text-muted-foreground">
+                                Device ID:
+                              </span>
+                              <span className="font-mono">
+                                {selectedUser.deviceId || "Not registered"}
+                              </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Device Type:</span>
-                              <span>{selectedUser.deviceName || "Unknown"}</span>
+                              <span className="text-muted-foreground">
+                                Device Type:
+                              </span>
+                              <span>
+                                {selectedUser.deviceName || "Unknown"}
+                              </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Platform:</span>
-                              <span>{selectedUser.devicePlatform || "Unknown"}</span>
+                              <span className="text-muted-foreground">
+                                Platform:
+                              </span>
+                              <span>
+                                {selectedUser.devicePlatform || "Unknown"}
+                              </span>
                             </div>
                           </div>
                         </div>
