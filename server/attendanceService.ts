@@ -628,13 +628,41 @@ export async function getAllAttendance(
               .from(workLocations)
               .where(eq(workLocations.id, record.workLocationId))
           : [];
+        let formattedAddress = locationData?.address || "";
+        if (record.clockInLocationId) {
+          const [locationHistory] = await db
+            .select()
+            .from(userLocationHistory)
+            .where(eq(userLocationHistory.id, record.clockInLocationId));
+
+          console.log("Location history:", locationHistory);
+          console.log(
+            "Location history clockInLocationId:",
+            record.clockInLocationId,
+          );
+          if (locationHistory?.addressInfo) {
+            // Extract formatted address from addressInfo
+            const addressInfo =
+              typeof locationHistory.addressInfo === "string"
+                ? JSON.parse(locationHistory.addressInfo)
+                : locationHistory.addressInfo;
+
+            if (addressInfo?.formatted) {
+              console.log("Formatted address:", addressInfo.formatted);
+              formattedAddress = addressInfo.formatted;
+            }
+          }
+        }
+        console.log(
+          `[Location] Clock-in at ${locationData?.name}: ${formattedAddress}`,
+        );
 
         return {
           ...record,
           userName: userData?.username,
           userEmail: userData?.email,
           locationName: locationData?.name,
-          locationAddress: locationData?.address,
+          locationAddress: formattedAddress,
         };
       }),
     );

@@ -268,11 +268,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (newPassword) {
         // Verify current password before updating
         if (!currentPassword) {
-          return res
-            .status(400)
-            .json({
-              message: "Current password is required to set a new password",
-            });
+          return res.status(400).json({
+            message: "Current password is required to set a new password",
+          });
         }
 
         // Import the password comparison function from auth.ts
@@ -337,11 +335,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.user.role !== "admin" &&
         req.user.username !== "admin"
       ) {
-        return res
-          .status(403)
-          .json({
-            message: "Forbidden: You can only view your own login history",
-          });
+        return res.status(403).json({
+          message: "Forbidden: You can only view your own login history",
+        });
       }
 
       // Get the user's location history
@@ -434,11 +430,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { userId, role } = req.body;
 
         if (!userId || !role || (role !== "user" && role !== "admin")) {
-          return res
-            .status(400)
-            .json({
-              message: "Valid user ID and role (user or admin) required",
-            });
+          return res.status(400).json({
+            message: "Valid user ID and role (user or admin) required",
+          });
         }
 
         const updatedUser = await storage.updateUserRole(userId, role);
@@ -479,7 +473,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const result = await clockIn(req.user.id, latitude, longitude, clockInLocationId);
+      const result = await clockIn(
+        req.user.id,
+        latitude,
+        longitude,
+        clockInLocationId,
+      );
 
       if (!result.success) {
         return res.status(400).json({ message: result.message });
@@ -543,7 +542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate,
         limit,
       );
-
+      console.log("Fetched attendance records:", records);
       res.json(records);
     } catch (error) {
       console.error("Error fetching attendance records:", error);
@@ -623,7 +622,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const records = await getAllAttendance(startDate, endDate, limit);
-
         res.json(records);
       } catch (error) {
         console.error("Error fetching all attendance records:", error);

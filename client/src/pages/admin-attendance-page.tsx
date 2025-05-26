@@ -301,6 +301,29 @@ const AdminAttendancePage = () => {
     const user = users.find((u) => u.id === userId);
     return user ? user.username : "Unknown User";
   };
+  const getUserNameStatusBadge = (
+    userId: number,
+    status: string,
+    isWithinGeofence: boolean,
+  ) => {
+    const user = users.find((u) => u.id === userId);
+
+    if (status === "present" && isWithinGeofence) {
+      return <Badge className="bg-green-500">Present</Badge>;
+    } else if (
+      status === "present" &&
+      !isWithinGeofence &&
+      user.role !== "admin"
+    ) {
+      return <Badge className="bg-yellow-500">Remote</Badge>;
+    } else if (status === "absent") {
+      return <Badge className="bg-red-500">Absent</Badge>;
+    } else if (status === "late") {
+      return <Badge className="bg-orange-500">Late</Badge>;
+    } else {
+      return <Badge>{status}</Badge>;
+    }
+  };
 
   // Format work location name
   const getLocationName = (locationId: number) => {
@@ -320,6 +343,18 @@ const AdminAttendancePage = () => {
       return <Badge className="bg-orange-500">Late</Badge>;
     } else {
       return <Badge>{status}</Badge>;
+    }
+  };
+  const getLocationAddress = (
+    userId: number,
+    locationName: string,
+    locationAddress,
+  ) => {
+    const user = users.find((u) => u.id === userId);
+    if (user.role === "admin") {
+      return locationName;
+    } else {
+      return locationAddress;
     }
   };
 
@@ -557,7 +592,8 @@ const AdminAttendancePage = () => {
                                 {formatDate(record.date)}
                               </div>
                               <div>
-                                {getStatusBadge(
+                                {getUserNameStatusBadge(
+                                  record.userId,
                                   record.status,
                                   record.isWithinGeofence,
                                 )}
@@ -578,11 +614,13 @@ const AdminAttendancePage = () => {
                                   Location:
                                 </span>
                                 <span className="text-sm">
-                                  {typeof record.locationAddress === 'string' 
-                                    ? record.locationAddress 
-                                    : record.locationAddress?.note || 
-                                      record.locationName ||
-                                      getLocationName(record.workLocationId)}
+                                  {getLocationAddress(
+                                    record.userId,
+                                    record.locationName,
+                                    typeof record.locationAddress === "string"
+                                      ? record.locationAddress
+                                      : record.locationAddress?.note,
+                                  ) || getLocationName(record.workLocationId)}
                                 </span>
                               </div>
                               <div className="flex flex-col">
@@ -663,7 +701,8 @@ const AdminAttendancePage = () => {
                                     getUserName(record.userId)}
                                 </TableCell>
                                 <TableCell>
-                                  {getStatusBadge(
+                                  {getUserNameStatusBadge(
+                                    record.userId,
                                     record.status,
                                     record.isWithinGeofence,
                                   )}
@@ -679,8 +718,11 @@ const AdminAttendancePage = () => {
                                 </TableCell>
 
                                 <TableCell>
-                                  {record.locationName ||
-                                    getLocationName(record.workLocationId)}
+                                  {getLocationAddress(
+                                    record.userId,
+                                    record.locationName,
+                                    record.locationAddress,
+                                  ) || getLocationName(record.workLocationId)}
                                 </TableCell>
                               </TableRow>
                             ))}

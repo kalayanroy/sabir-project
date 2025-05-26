@@ -1,7 +1,7 @@
 import { users, deviceAttempts, type User, type InsertUser, type DeviceAttempt, type InsertDeviceAttempt } from "@shared/schema";
 import session from "express-session";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
