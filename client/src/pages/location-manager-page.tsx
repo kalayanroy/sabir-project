@@ -24,17 +24,17 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  Loader2, 
-  LogIn, 
-  LogOut, 
-  MapPin, 
+import {
+  Loader2,
+  LogIn,
+  LogOut,
+  MapPin,
   AlertCircle,
   ArrowLeft,
   Search,
   Filter,
   X,
-  Home
+  Home,
 } from "lucide-react";
 // Import Map icon separately to avoid conflict with built-in Map object
 import { Map as MapIcon } from "lucide-react";
@@ -45,7 +45,7 @@ type UserLocation = {
   userId: number;
   username?: string;
   email?: string;
-  eventType: 'login' | 'logout';
+  eventType: "login" | "logout";
   timestamp: string;
   ipAddress?: string;
   latitude?: number;
@@ -63,8 +63,10 @@ export default function LocationManagerPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<'all' | 'login' | 'logout'>('all');
-  
+  const [filterType, setFilterType] = useState<"all" | "login" | "logout">(
+    "all",
+  );
+
   // Set page title
   useEffect(() => {
     document.title = "Location Manager | SecureLogin";
@@ -94,27 +96,42 @@ export default function LocationManagerPage() {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleString();
   };
-  
+
   // Filter locations based on search term and event type
-  const filteredLocations = locationHistory 
-    ? locationHistory.filter(location => {
-        const matchesSearch = !searchTerm || 
-          (location.username && location.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (location.email && location.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (location.ipAddress && location.ipAddress.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (location.addressInfo?.city && location.addressInfo.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (location.addressInfo?.country && location.addressInfo.country.toLowerCase().includes(searchTerm.toLowerCase()));
-        
-        const matchesType = filterType === 'all' || location.eventType === filterType;
-        
+  const filteredLocations = locationHistory
+    ? locationHistory.filter((location) => {
+        const matchesSearch =
+          !searchTerm ||
+          (location.username &&
+            location.username
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
+          (location.email &&
+            location.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (location.ipAddress &&
+            location.ipAddress
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
+          (location.addressInfo?.city &&
+            location.addressInfo.city
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
+          (location.addressInfo?.country &&
+            location.addressInfo.country
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()));
+
+        const matchesType =
+          filterType === "all" || location.eventType === filterType;
+
         return matchesSearch && matchesType;
       })
     : [];
-    
+
   // Clear search and filters
   const clearFilters = () => {
     setSearchTerm("");
-    setFilterType('all');
+    setFilterType("all");
   };
 
   if (isLoading) {
@@ -153,12 +170,7 @@ export default function LocationManagerPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                asChild 
-                className="mr-2"
-              >
+              <Button variant="ghost" size="icon" asChild className="mr-2">
                 <Link href="/">
                   <ArrowLeft className="h-5 w-5" />
                   <span className="sr-only">Back to Home</span>
@@ -169,9 +181,13 @@ export default function LocationManagerPage() {
                 Location Manager
               </CardTitle>
             </div>
-            <CardDescription>User login and logout location tracking</CardDescription>
+            <CardDescription>
+              User login and logout location tracking
+            </CardDescription>
           </div>
-          <Button size="sm" onClick={() => refetchLocations()}>Refresh</Button>
+          <Button size="sm" onClick={() => refetchLocations()}>
+            Refresh
+          </Button>
         </CardHeader>
 
         <CardContent>
@@ -199,14 +215,26 @@ export default function LocationManagerPage() {
             </div>
             <div className="flex gap-2">
               <Button
-                variant={filterType !== 'all' ? "default" : "outline"}
+                variant={filterType !== "all" ? "default" : "outline"}
                 className="gap-1"
-                onClick={() => setFilterType(filterType === 'all' ? 'login' : filterType === 'login' ? 'logout' : 'all')}
+                onClick={() =>
+                  setFilterType(
+                    filterType === "all"
+                      ? "login"
+                      : filterType === "login"
+                        ? "logout"
+                        : "all",
+                  )
+                }
               >
                 <Filter className="h-4 w-4" />
-                {filterType === 'all' ? 'All Events' : filterType === 'login' ? 'Login Events' : 'Logout Events'}
+                {filterType === "all"
+                  ? "All Events"
+                  : filterType === "login"
+                    ? "Login Events"
+                    : "Logout Events"}
               </Button>
-              {(searchTerm || filterType !== 'all') && (
+              {(searchTerm || filterType !== "all") && (
                 <Button
                   variant="ghost"
                   className="gap-1"
@@ -226,23 +254,40 @@ export default function LocationManagerPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
-                    <TableHead className="hidden sm:table-cell">Event</TableHead>
+                    <TableHead className="hidden sm:table-cell">
+                      Event
+                    </TableHead>
                     <TableHead className="hidden md:table-cell">Time</TableHead>
                     <TableHead>Address</TableHead>
                     <TableHead>Latitude/Longitude</TableHead>
-                    <TableHead className="hidden lg:table-cell">IP Address</TableHead>
-                    <TableHead className="hidden xl:table-cell">Device Info</TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      IP Address
+                    </TableHead>
+                    <TableHead className="hidden xl:table-cell">
+                      Device Info
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredLocations.map((location) => (
                     <TableRow key={location.id}>
                       <TableCell>
-                        <div className="font-medium">{location.username || "Unknown"}</div>
-                        <div className="text-xs text-muted-foreground">{location.email}</div>
+                        <div className="font-medium">
+                          {location.username || "Unknown"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {location.email}
+                        </div>
                         <div className="sm:hidden mt-1">
-                          <Badge variant={location.eventType === 'login' ? 'default' : 'secondary'} className="flex items-center gap-1">
-                            {location.eventType === 'login' ? (
+                          <Badge
+                            variant={
+                              location.eventType === "login"
+                                ? "default"
+                                : "secondary"
+                            }
+                            className="flex items-center gap-1"
+                          >
+                            {location.eventType === "login" ? (
                               <>
                                 <LogIn className="h-3 w-3" />
                                 Login
@@ -260,8 +305,15 @@ export default function LocationManagerPage() {
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant={location.eventType === 'login' ? 'default' : 'secondary'} className="flex items-center gap-1">
-                          {location.eventType === 'login' ? (
+                        <Badge
+                          variant={
+                            location.eventType === "login"
+                              ? "default"
+                              : "secondary"
+                          }
+                          className="flex items-center gap-1"
+                        >
+                          {location.eventType === "login" ? (
                             <>
                               <LogIn className="h-3 w-3" />
                               Login
@@ -282,13 +334,15 @@ export default function LocationManagerPage() {
                           <div className="flex items-start gap-1">
                             <MapPin className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                             <div>
-                              {location.addressInfo?.formatted || 
-                                `${location.addressInfo?.city || ''} ${location.addressInfo?.state || ''} ${location.addressInfo?.country || ''}` || 
+                              {location.addressInfo?.formatted ||
+                                `${location.addressInfo?.city || ""} ${location.addressInfo?.state || ""} ${location.addressInfo?.country || ""}` ||
                                 "Unknown location"}
                             </div>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">No location data</span>
+                          <span className="text-muted-foreground">
+                            No location data
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className="font-mono text-xs">
@@ -302,34 +356,58 @@ export default function LocationManagerPage() {
                         )}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        <code className="text-xs">{location.ipAddress || "N/A"}</code>
+                        <code className="text-xs">
+                          {location.ipAddress || "N/A"}
+                        </code>
                       </TableCell>
                       <TableCell className="hidden xl:table-cell max-w-[200px]">
                         {location.deviceInfo ? (
                           <div className="text-xs space-y-1">
                             {(() => {
                               try {
-                                const deviceData = JSON.parse(location.deviceInfo);
+                                const deviceData = JSON.parse(
+                                  location.deviceInfo,
+                                );
                                 return (
                                   <>
                                     {deviceData.deviceModel && (
-                                      <div><span className="font-medium">Model:</span> {deviceData.deviceModel}</div>
+                                      <div>
+                                        <span className="font-medium">
+                                          Model:
+                                        </span>{" "}
+                                        {deviceData.deviceModel}
+                                      </div>
                                     )}
                                     {deviceData.deviceName && (
-                                      <div><span className="font-medium">Name:</span> {deviceData.deviceName}</div>
+                                      <div>
+                                        <span className="font-medium">
+                                          Name:
+                                        </span>{" "}
+                                        {deviceData.deviceName}
+                                      </div>
                                     )}
                                     {deviceData.devicePlatform && (
-                                      <div><span className="font-medium">Platform:</span> {deviceData.devicePlatform}</div>
+                                      <div>
+                                        <span className="font-medium">
+                                          Platform:
+                                        </span>{" "}
+                                        {deviceData.devicePlatform}
+                                      </div>
                                     )}
                                     {deviceData.deviceId && (
                                       <div className="text-muted-foreground overflow-hidden text-ellipsis">
-                                        <span className="font-medium">ID:</span> {deviceData.deviceId}
+                                        <span className="font-medium">ID:</span>{" "}
+                                        {deviceData.deviceId}
                                       </div>
                                     )}
                                   </>
                                 );
                               } catch (e) {
-                                return <span className="text-muted-foreground">{location.deviceInfo}</span>;
+                                return (
+                                  <span className="text-muted-foreground">
+                                    {location.deviceInfo}
+                                  </span>
+                                );
                               }
                             })()}
                           </div>
@@ -346,15 +424,25 @@ export default function LocationManagerPage() {
             <div className="text-center p-12 border rounded-md bg-muted/10">
               {locationHistory && locationHistory.length > 0 ? (
                 <div>
-                  <p className="text-lg font-medium mb-2">No locations match your filters</p>
-                  <p className="text-muted-foreground mb-4">Try adjusting your search or filter criteria.</p>
-                  <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
+                  <p className="text-lg font-medium mb-2">
+                    No locations match your filters
+                  </p>
+                  <p className="text-muted-foreground mb-4">
+                    Try adjusting your search or filter criteria.
+                  </p>
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear Filters
+                  </Button>
                 </div>
               ) : (
                 <div>
                   <MapIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-medium mb-2">No location history found</p>
-                  <p className="text-muted-foreground">Location data will appear here when users log in or out.</p>
+                  <p className="text-lg font-medium mb-2">
+                    No location history found
+                  </p>
+                  <p className="text-muted-foreground">
+                    Location data will appear here when users log in or out.
+                  </p>
                 </div>
               )}
             </div>

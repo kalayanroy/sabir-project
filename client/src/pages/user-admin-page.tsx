@@ -45,6 +45,7 @@ import { Link } from "wouter";
 
 type SafeUser = {
   id: number;
+  empId?: string;
   username: string;
   email: string;
   role: string;
@@ -113,6 +114,35 @@ export default function UserAdminPage() {
     onError: (error: Error) => {
       toast({
         title: "Failed to Update Role",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to generate Employee ID
+  const generateEmpIdMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await apiRequest("POST", "/api/admin/generate-emp-id", { userId });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to generate Employee ID");
+      }
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Employee ID Generated",
+        description: `Employee ID ${data.empId} has been assigned successfully.`,
+        variant: "default",
+      });
+
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Generate Employee ID",
         description: error.message,
         variant: "destructive",
       });
@@ -547,7 +577,34 @@ export default function UserAdminPage() {
                                   <TableCell className="font-medium">
                                     {user.username}
                                   </TableCell>
-                                  <TableCell>{user.empId}</TableCell>
+                                  <TableCell>
+                                    <div className="flex items-center gap-2">
+                                      {user.empId ? (
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                          {user.empId}
+                                        </Badge>
+                                      ) : (
+                                        <div className="flex items-center gap-2">
+                                          <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
+                                            No EmpID
+                                          </Badge>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => generateEmpIdMutation.mutate(user.id)}
+                                            disabled={generateEmpIdMutation.isPending}
+                                            className="text-xs px-2 py-1 h-6"
+                                          >
+                                            {generateEmpIdMutation.isPending && generateEmpIdMutation.variables === user.id ? (
+                                              "Generating..."
+                                            ) : (
+                                              "Generate"
+                                            )}
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </TableCell>
                                   <TableCell>{user.email}</TableCell>
                                   <TableCell>
                                     <Badge
