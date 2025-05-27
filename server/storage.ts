@@ -42,6 +42,9 @@ export interface IStorage {
     reason: string,
   ): Promise<DeviceAttempt | undefined>;
 
+  // Employee ID operations
+  generateEmployeeId(userId: number): Promise<User | undefined>;
+
   sessionStore: session.Store;
 }
 
@@ -302,6 +305,31 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return updated;
+  }
+
+  async generateEmployeeId(userId: number): Promise<User | undefined> {
+    // Get the user first to check if they already have an Employee ID
+    const existingUser = await this.getUser(userId);
+    
+    if (!existingUser) {
+      return undefined;
+    }
+
+    if (existingUser.empId) {
+      return existingUser; // Already has Employee ID
+    }
+
+    // Generate the next Employee ID using the same logic as in createUser
+    const empId = await this.generateNextEmpId();
+
+    // Update the user with the new Employee ID
+    const [updatedUser] = await db
+      .update(users)
+      .set({ empId })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return updatedUser;
   }
 }
 

@@ -456,6 +456,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Generate Employee ID for user (admin only)
+  app.post(
+    "/api/admin/generate-emp-id",
+    async (req: Request, res: Response) => {
+      try {
+        if (
+          !req.isAuthenticated() ||
+          (req.user.role !== "admin" && req.user.username !== "admin")
+        ) {
+          return res
+            .status(403)
+            .json({ message: "Unauthorized access - not admin" });
+        }
+
+        const { userId } = req.body;
+
+        if (!userId) {
+          return res
+            .status(400)
+            .json({ message: "User ID is required" });
+        }
+
+        // Get the user first to check if they already have an Employee ID
+        const existingUser = await storage.getUser(userId);
+        
+        if (!existingUser) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        if (existingUser.empId) {
+          return res.status(400).json({ 
+            message: "User already has an Employee ID",
+            empId: existingUser.empId 
+          });
+        }
+
+        const updatedUser = await storage.generateEmployeeId(userId);
+
+        if (!updatedUser) {
+          return res.status(500).json({ message: "Failed to generate Employee ID" });
+        }
+
+        res.json({
+          success: true,
+          message: "Employee ID generated successfully",
+          empId: updatedUser.empId,
+          user: updatedUser,
+        });
+      } catch (error) {
+        console.error("Error generating Employee ID:", error);
+        res.status(500).json({ message: "Failed to generate Employee ID" });
+      }
+    },
+  );
+
   // ATTENDANCE MANAGEMENT API ENDPOINTS
 
   // Clock in
