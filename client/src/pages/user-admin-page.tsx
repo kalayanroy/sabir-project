@@ -63,6 +63,8 @@ export default function UserAdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<SafeUser | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>("");
+  const [editingEmpId, setEditingEmpId] = useState<{userId: number, empId: string} | null>(null);
+  const [manualEmpId, setManualEmpId] = useState("");
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined);
@@ -143,6 +145,37 @@ export default function UserAdminPage() {
     onError: (error: Error) => {
       toast({
         title: "Failed to Generate Employee ID",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to manually update Employee ID
+  const updateEmpIdMutation = useMutation({
+    mutationFn: async (data: { userId: number; empId: string }) => {
+      const res = await apiRequest("POST", "/api/admin/update-emp-id", data);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to update Employee ID");
+      }
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Employee ID Updated",
+        description: `Employee ID has been updated to ${data.empId} successfully.`,
+        variant: "default",
+      });
+
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setEditingEmpId(null);
+      setManualEmpId("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Update Employee ID",
         description: error.message,
         variant: "destructive",
       });
@@ -579,10 +612,59 @@ export default function UserAdminPage() {
                                   </TableCell>
                                   <TableCell>
                                     <div className="flex items-center gap-2">
-                                      {user.empId ? (
-                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                          {user.empId}
-                                        </Badge>
+                                      {editingEmpId?.userId === user.id ? (
+                                        <div className="flex items-center gap-2">
+                                          <Input
+                                            value={manualEmpId}
+                                            onChange={(e) => setManualEmpId(e.target.value)}
+                                            placeholder="Enter Employee ID"
+                                            className="w-32 h-7 text-xs"
+                                          />
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              if (manualEmpId.trim()) {
+                                                updateEmpIdMutation.mutate({
+                                                  userId: user.id,
+                                                  empId: manualEmpId.trim()
+                                                });
+                                              }
+                                            }}
+                                            disabled={updateEmpIdMutation.isPending || !manualEmpId.trim()}
+                                            className="text-xs px-2 py-1 h-7"
+                                          >
+                                            {updateEmpIdMutation.isPending ? "Saving..." : "Save"}
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                              setEditingEmpId(null);
+                                              setManualEmpId("");
+                                            }}
+                                            className="text-xs px-2 py-1 h-7"
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </div>
+                                      ) : user.empId ? (
+                                        <div className="flex items-center gap-2">
+                                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                            {user.empId}
+                                          </Badge>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                              setEditingEmpId({ userId: user.id, empId: user.empId || "" });
+                                              setManualEmpId(user.empId || "");
+                                            }}
+                                            className="text-xs px-2 py-1 h-6"
+                                          >
+                                            Edit
+                                          </Button>
+                                        </div>
                                       ) : (
                                         <div className="flex items-center gap-2">
                                           <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
@@ -593,13 +675,24 @@ export default function UserAdminPage() {
                                             size="sm"
                                             onClick={() => generateEmpIdMutation.mutate(user.id)}
                                             disabled={generateEmpIdMutation.isPending}
-                                            className="text-xs px-2 py-1 h-6"
+                                            className="text-xs px-2 py-1 h-6 mr-1"
                                           >
                                             {generateEmpIdMutation.isPending && generateEmpIdMutation.variables === user.id ? (
                                               "Generating..."
                                             ) : (
-                                              "Generate"
+                                              "Auto Generate"
                                             )}
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              setEditingEmpId({ userId: user.id, empId: "" });
+                                              setManualEmpId("");
+                                            }}
+                                            className="text-xs px-2 py-1 h-6"
+                                          >
+                                            Manual Input
                                           </Button>
                                         </div>
                                       )}

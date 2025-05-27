@@ -44,6 +44,8 @@ export interface IStorage {
 
   // Employee ID operations
   generateEmployeeId(userId: number): Promise<User | undefined>;
+  getUserByEmpId(empId: string): Promise<User | undefined>;
+  updateEmployeeId(userId: number, empId: string): Promise<User | undefined>;
 
   sessionStore: session.Store;
 }
@@ -323,6 +325,21 @@ export class DatabaseStorage implements IStorage {
     const empId = await this.generateNextEmpId();
 
     // Update the user with the new Employee ID
+    const [updatedUser] = await db
+      .update(users)
+      .set({ empId })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return updatedUser;
+  }
+
+  async getUserByEmpId(empId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.empId, empId));
+    return user || undefined;
+  }
+
+  async updateEmployeeId(userId: number, empId: string): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
       .set({ empId })

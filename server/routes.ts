@@ -511,6 +511,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Manually update Employee ID for user (admin only)
+  app.post(
+    "/api/admin/update-emp-id",
+    async (req: Request, res: Response) => {
+      try {
+        if (
+          !req.isAuthenticated() ||
+          (req.user.role !== "admin" && req.user.username !== "admin")
+        ) {
+          return res
+            .status(403)
+            .json({ message: "Unauthorized access - not admin" });
+        }
+
+        const { userId, empId } = req.body;
+
+        if (!userId || !empId) {
+          return res
+            .status(400)
+            .json({ message: "User ID and Employee ID are required" });
+        }
+
+        // Validate Employee ID format (you can add more validation rules here)
+        const trimmedEmpId = empId.trim();
+        if (!trimmedEmpId) {
+          return res
+            .status(400)
+            .json({ message: "Employee ID cannot be empty" });
+        }
+
+        // Check if Employee ID already exists for another user
+        const existingUserWithEmpId = await storage.getUserByEmpId(trimmedEmpId);
+        if (existingUserWithEmpId && existingUserWithEmpId.id !== userId) {
+          return res.status(400).json({ 
+            message: `Employee ID "${trimmedEmpId}" is already assigned to another user` 
+          });
+        }
+
+        const updatedUser = await storage.updateEmployeeId(userId, trimmedEmpId);
+
+        if (!updatedUser) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({
+          success: true,
+          message: "Employee ID updated successfully",
+          empId: updatedUser.empId,
+          user: updatedUser,
+        });
+      } catch (error) {
+        console.error("Error updating Employee ID:", error);
+        res.status(500).json({ message: "Failed to update Employee ID" });
+      }
+    },
+  );
+
   // ATTENDANCE MANAGEMENT API ENDPOINTS
 
   // Clock in
