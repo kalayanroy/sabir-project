@@ -1,6 +1,5 @@
-import { LocationData } from "@shared/schema";
+import { LocationData, users, userLocationHistory } from "@shared/schema";
 import { db } from "./db";
-import { userLocationHistory } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 // Enhanced cache for location data to improve performance
@@ -146,17 +145,21 @@ export async function recordUserLocation(
 ) {
   try {
     // Get user info and device info to include in location history
-    const userInfo = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.id, userId),
-      columns: {
-        username: true,
-        email: true,
-        deviceId: true,
-        deviceName: true,
-        deviceModel: true,
-        devicePlatform: true,
-      },
-    });
+    const userResult = await db.select({
+      username: users.username,
+      email: users.email,
+      deviceId: users.deviceId,
+      deviceName: users.deviceName,
+      deviceModel: users.deviceModel,
+      devicePlatform: users.devicePlatform,
+    }).from(users).where(eq(users.id, userId)).limit(1);
+
+    const user = userResult[0];
+    
+    if (!user) {
+      console.error(`[Location] User not found for ID: ${userId}`);
+      return;
+    }
 
     // Make sure we have coordinates
     if (!locationData.latitude || !locationData.longitude) {
@@ -167,17 +170,17 @@ export async function recordUserLocation(
       // Still record the event but without location data
       await db.insert(userLocationHistory).values({
         userId,
-        username: userInfo?.username,
-        email: userInfo?.email,
+        username: user?.username || "Unknown",
+        email: user?.email || "Unknown",
         eventType,
         ipAddress: locationData.ipAddress,
         deviceInfo: JSON.stringify({
           timestamp: new Date().toISOString(),
           event: eventType,
-          deviceId: userInfo?.deviceId || "Unknown",
-          deviceName: userInfo?.deviceName || "Unknown",
-          deviceModel: userInfo?.deviceModel || "Unknown",
-          devicePlatform: userInfo?.devicePlatform || "Unknown",
+          deviceId: user?.deviceId || "Unknown",
+          deviceName: user?.deviceName || "Unknown",
+          deviceModel: user?.deviceModel || "Unknown",
+          devicePlatform: user?.devicePlatform || "Unknown",
         }),
       });
 
