@@ -170,17 +170,17 @@ export async function recordUserLocation(
       // Still record the event but without location data
       await db.insert(userLocationHistory).values({
         userId,
-        username: user?.username || "Unknown",
-        email: user?.email || "Unknown",
+        username: user.username,
+        email: user.email,
         eventType,
         ipAddress: locationData.ipAddress,
         deviceInfo: JSON.stringify({
           timestamp: new Date().toISOString(),
           event: eventType,
-          deviceId: user?.deviceId || "Unknown",
-          deviceName: user?.deviceName || "Unknown",
-          deviceModel: user?.deviceModel || "Unknown",
-          devicePlatform: user?.devicePlatform || "Unknown",
+          deviceId: user.deviceId || "Unknown",
+          deviceName: user.deviceName || "Unknown",
+          deviceModel: user.deviceModel || "Unknown",
+          devicePlatform: user.devicePlatform || "Unknown",
         }),
       });
 
@@ -199,8 +199,8 @@ export async function recordUserLocation(
     // Record the location history
     await db.insert(userLocationHistory).values({
       userId,
-      username: userInfo?.username,
-      email: userInfo?.email,
+      username: user.username,
+      email: user.email,
       eventType,
       latitude: locationData.latitude,
       longitude: locationData.longitude,
@@ -213,10 +213,10 @@ export async function recordUserLocation(
       deviceInfo: JSON.stringify({
         timestamp: new Date().toISOString(),
         event: eventType,
-        deviceId: userInfo?.deviceId || "Unknown",
-        deviceName: userInfo?.deviceName || "Unknown",
-        deviceModel: userInfo?.deviceModel || "Unknown",
-        devicePlatform: userInfo?.devicePlatform || "Unknown",
+        deviceId: user.deviceId || "Unknown",
+        deviceName: user.deviceName || "Unknown",
+        deviceModel: user.deviceModel || "Unknown",
+        devicePlatform: user.devicePlatform || "Unknown",
         geoDetails: geoData.raw
           ? {
               osmId: geoData.raw.osm_id,
